@@ -1,0 +1,66 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: maven-helm-run-
+  namespace: infra
+spec:
+  pipelineRef:
+    name: maven-helm
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  serviceAccountName: tekton-pipeline
+  workspaces:
+  - name: maven-source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  - name: maven-settings
+    secret:
+      secretName: maven-settings
+  - name: maven-local-repo
+    persistentVolumeClaim:
+      claimName: maven-local-repo
+  - name: maven-flux-manifests
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  - name: docker-config
+    secret:
+      secretName: docker-config
+  - name: helm-source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  - name: ssh-directory
+    secret:
+      secretName: ssh-credentials
+  params:
+  - name: maven-repo-url
+    value: git@github.com:biya-bi/ostock-license-service.git
+  - name: maven-repo-revision
+    value: develop
+  - name: maven-context-dir
+    value: "."
+  - name: helm-charts-dir
+    value: "."
+  - name: helm-chart-repo-url
+    value: git@github.com:biya-bi/ostock-license-service-chart.git
+  - name: helm-chart-repo-revision
+    value: develop
+  - name: helm-chart-release-namespace
+    value: ostock
+  - name: environment
+    value: local

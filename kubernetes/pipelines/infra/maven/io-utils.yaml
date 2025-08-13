@@ -1,0 +1,55 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations: {}
+  generateName: maven-lib-run-
+  namespace: infra
+spec:
+  params:
+    - name: flux-gitrepo-namespace
+      value: infra
+    - name: flux-gitrepo-name
+      value: io-utils
+    - name: context-dir
+      value: .
+  pipelineRef:
+    name: maven-lib
+  taskRunTemplate:
+    podTemplate:
+      securityContext:
+        fsGroup: 65532
+    serviceAccountName: tekton-pipeline
+  timeouts:
+    pipeline: 1h0m0s
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Mi
+        status: {}
+    - name: maven-settings
+      secret:
+        secretName: maven-settings
+    - name: maven-local-repo
+      persistentVolumeClaim:
+        claimName: maven-local-repo
+    - name: ssh-directory
+      secret:
+        secretName: ssh-credentials
+    - name: flux-manifest-dir
+      volumeClaimTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Mi
+        status: {}

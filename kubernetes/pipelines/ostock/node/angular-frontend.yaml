@@ -1,0 +1,65 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: node-helm-run-
+  namespace: infra
+spec:
+  pipelineRef:
+    name: node-helm
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  serviceAccountName: tekton-pipeline
+  workspaces:
+  - name: node-source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  - name: node-local-repo
+    persistentVolumeClaim:
+      claimName: node-local-repo
+  - name: node-flux-manifests
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  - name: docker-config
+    secret:
+      secretName: docker-config
+  - name: helm-source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  - name: ssh-directory
+    secret:
+      secretName: ssh-credentials
+  params:
+  - name: node-repo-url
+    value: git@github.com:biya-bi/ostock-angular-frontend.git
+  - name: node-repo-revision
+    value: develop
+  - name: node-context-dir
+    value: "."
+  - name: helm-charts-dir
+    value: "."
+  - name: helm-chart-repo-url
+    value: git@github.com:biya-bi/ostock-angular-frontend-chart.git
+  - name: helm-chart-repo-revision
+    value: develop
+  - name: helm-chart-release-namespace
+    value: ostock
+  - name: group-id
+    value: ostock
+  - name: environment
+    value: local
