@@ -24,8 +24,8 @@ On the on-premises machine, the below entries should be added to the /etc/hosts 
 ```
 ### Kubernetes on-premises
 1. Clone the git@github.com:biya-bi/nguiland-infra-engine.git repository on the on-premises machine.
-2. At the root of the directory that was just cloned, run `./bootstrap.sh local <branch_name>`, replacing `<branch_name>` with the actual branch name. Note that we have specified the **local** cluster in the later command. Deployment on-premises require that the cluster name in the command be **local**.
-3. After running `./bootstrap.sh local <branch_name>` on the server, do the following:
+2. At the root of the directory that was just cloned, run `./bootstrap.sh int <branch_name>`, replacing `<branch_name>` with the actual branch name. Note that we have specified the **int** cluster in the later command. Deployment on-premises require that the cluster name in the command be **int**.
+3. After running `./bootstrap.sh int <branch_name>` on the server, do the following:
 	1. Use kubectl to expose services. The Wireguard client IP address should be used in port forwarding. For example, `kubectl port-forward svc/artifactory-jcr 9001:8082 -n infra --address=10.0.0.2`
 	2. Test artifactory-jcr and artifactory-oss port forwarding using the curl command. If the port forwarding loses connection to the pod after running the curl, restart the pods using a command similar to `kubectl rollout restart deployment <deployment_name> -n infra`, then test the curl again. If the curl now succeeds, stop kubectl port forwarding command for the given service and run step 1 again for the service in question.
 ## Artifactory

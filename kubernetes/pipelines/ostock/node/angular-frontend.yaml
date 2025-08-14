@@ -62,4 +62,4 @@ spec:
   - name: group-id
     value: ostock
   - name: environment
-    value: local
+    value: int

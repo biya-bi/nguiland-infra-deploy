@@ -63,4 +63,4 @@ spec:
   - name: helm-chart-release-namespace
     value: ostock
   - name: environment
-    value: local
+    value: int
