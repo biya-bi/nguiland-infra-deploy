@@ -34,17 +34,17 @@ Independent of the environment, once artifactory-jcr and artifactory-oss deploym
 Some helpful commands are given in the commands.sh file.
 ## Pipelines
 The pipeline directory contains manifest that can be used to manually launch pipelines. This can be done using commands of the form `kubectl apply -f <manifest_path>`. Note that most pipeline runs have an environment parameter which may have to be changed (or commented out) to match on the environment on which the deployment is made.
-Ideally the first pipeline runs should be in the below order:
+Ideally the pipelines should be run in the below order:
 ```
-kubectl apply -f kubernetes/pipelines/infra/maven/lib-parent.yaml
-kubectl apply -f kubernetes/pipelines/infra/maven/io-utils.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/dto.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/orm.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/cross-cutting-concerns.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/config-service.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/eureka-service.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/gateway-service.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/licensing-service.yaml
-kubectl apply -f kubernetes/pipelines/ostock/maven/organization-service.yaml
-kubectl apply -f kubernetes/pipelines/ostock/node/angular-frontend.yaml
+kubectl create -f kubernetes/pipelines/infra/maven/lib-parent.yaml
+kubectl create -f kubernetes/pipelines/infra/maven/io-utils.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/dto.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/orm.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/cross-cutting-concerns.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/config-service.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/eureka-service.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/gateway-service.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/licensing-service.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/organization-service.yaml
+kubectl create -f kubernetes/pipelines/ostock/node/angular-frontend.yaml
 ```
