@@ -48,3 +48,8 @@ kubectl create -f kubernetes/pipelines/ostock/maven/licensing-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/organization-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/node/angular-frontend.yaml
 ```
+Pipelinerun logs can be viewed using the below command:
+```
+tkn pipelinerun logs -n infra -f
+```
+
