@@ -6,10 +6,10 @@ metadata:
   namespace: infra
 spec:
   params:
-    - name: url
-      value: ssh://github.com/biya-bi/rainbow-lib-parent.git
-    - name: revision
-      value: develop
+    - name: flux-gitrepo-namespace
+      value: infra
+    - name: flux-gitrepo-name
+      value: lib-parent
     - name: context-dir
       value: .
   pipelineRef:
