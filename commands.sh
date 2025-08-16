@@ -1,8 +1,3 @@
-# Install Capacitor
-kubectl apply -f kubernetes/dashboards/capacitor.yaml
-# Expose capacitor service
-kubectl -n flux-system port-forward svc/capacitor 9000
-
 # Delete pipeline runs to free resources
 tkn pipelinerun list -n infra --no-headers=true | awk '/node-helm-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
 tkn pipelinerun list -n infra --no-headers=true | awk '/maven-helm-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force

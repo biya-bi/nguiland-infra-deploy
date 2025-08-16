@@ -8,6 +8,7 @@
 3. [Commands](#commands)
 4. [Pipelines](#pipelines)
 5. [Kubernetes Dashboard](#kubernetes-dashboard)
+6. [FluxCD UI](#fluxcd-ui)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -64,4 +65,12 @@ kubectl apply -f kubernetes/dashboards/kubernetes-dashboard-admin-user.yaml
 kubectl -n kubernetes-dashboard create token admin-user
 # Expose the kubernetes-dashboard service
 kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard 8443:443
+```
+## FluxCD UI
+If a FluxCD UI is required, Capacitor can be considered. The below command may be useful:
+```
+# Install Capacitor
+kubectl apply -f kubernetes/dashboards/capacitor.yaml
+# Expose the capacitor service
+kubectl -n flux-system port-forward svc/capacitor 9000
 ```
