@@ -7,6 +7,7 @@
 2. [Artifactory](#artifactory)
 3. [Commands](#commands)
 4. [Pipelines](#pipelines)
+5. [Kubernetes Dashboard](#kubernetes-dashboard)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -52,4 +53,15 @@ Pipelinerun logs can be viewed using the below command:
 ```
 tkn pipelinerun logs -n infra -f
 ```
-
+## Kubernetes Dashboard
+If a Kubernetes Dashboard is required, the below commands may be useful: 
+```
+# Install the Kubernetes Dashboard
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+# Create the Kubernetes admin user
+kubectl apply -f kubernetes/dashboards/kubernetes-dashboard-admin-user.yaml
+# Create the Kubernetes admin user token
+kubectl -n kubernetes-dashboard create token admin-user
+# Expose the kubernetes-dashboard service
+kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard 8443:443
+```
