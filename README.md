@@ -5,12 +5,12 @@
 	3. [Adding host entries on the on-premises machine](#on-premises-host-entries).
 	4. [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
 2. [Artifactory](#artifactory)
-3. [Commands](#commands)
-4. [Pipelines](#pipelines)
-5. [Kubernetes Dashboard](#kubernetes-dashboard)
-6. [FluxCD UI](#fluxcd-ui)
-7. [Deleting pipeline runs](#deleting-pipeline-runs)
-8. [Removing unused Docker resources](#removing-unused-docker-resources)
+3. [Pipelines](#pipelines)
+4. [Kubernetes Dashboard](#kubernetes-dashboard)
+5. [FluxCD UI](#fluxcd-ui)
+6. [Deleting pipeline runs](#deleting-pipeline-runs)
+7. [Removing unused Docker resources](#removing-unused-docker-resources)
+8. [Logging in to GitHub Container Registry](#logging-in-to-github-container-registry)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -34,10 +34,8 @@ On the on-premises machine, the below entries should be added to the /etc/hosts 
 	2. Test artifactory-jcr and artifactory-oss port forwarding using the curl command. If the port forwarding loses connection to the pod after running the curl, restart the pods using a command similar to `kubectl rollout restart deployment <deployment_name> -n infra`, then test the curl again. If the curl now succeeds, stop kubectl port forwarding command for the given service and run step 1 again for the service in question.
 ## Artifactory
 Independent of the environment, once artifactory-jcr and artifactory-oss deployments are successful, the next step should be to login and change the default passwords to those encrypted by SOPS-AGE and deployed to the cluster. If this is not done, deployments that use secrets deployed in the cluster will fail. For example, pipeline runs will push Docker images to JFrog Container Registry (artifactory-jcr) using secrets deployed in the cluster. This clearly means that the default password of admin user for artifactory-jcr should be changed to that deployed in the cluster for the image push to be successful.
-## Commands
-Some helpful commands are given in the commands.sh file.
 ## Pipelines
-The pipeline directory contains manifest that can be used to manually launch pipelines. This can be done using commands of the form `kubectl apply -f <manifest_path>`. Note that most pipeline runs have an environment parameter which may have to be changed (or commented out) to match on the environment on which the deployment is made.
+The pipeline directory contains manifests that can be used to manually launch pipelines. This can be done using commands of the form `kubectl apply -f <manifest_path>`. Note that most pipeline runs have an environment parameter which may have to be changed (or commented out) to match on the environment on which the deployment is made.
 Ideally the pipelines should be run in the below order:
 ```
 kubectl create -f kubernetes/pipelines/infra/maven/lib-parent.yaml
@@ -97,4 +95,15 @@ docker rm -f $(docker ps -a -q)
 docker rmi -f $(docker images -a -q)
 # Remove all resources (unused containers, volumes, and networks in addition to images)
 docker system prune -a -f
+```
+## Tekton
+The below commands may be helpful in working with Tekton
+```
+# Get Tekton pipeline services
+kubectl get svc -n tekton-pipelines
+```
+## Logging in to GitHub Container Registry
+```
+# This assumes a GitHub Personal Access Token with necessary rights is contained within the GITHUB_PERSONAL_ACCESS_TOKEN environment variable.
+echo $GITHUB_PERSONAL_ACCESS_TOKEN | docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
 ```
