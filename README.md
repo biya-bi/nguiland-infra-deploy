@@ -78,7 +78,7 @@ kubectl -n flux-system port-forward svc/capacitor 9000
 The below commands can be used in deleting pipeline runs:
 ```
 # Delete non-running pipeline runs
-tkn pipelinerun ls  -n infra --no-headers=true | awk -v STATUS="Running" '$NF != STATUS {print}' | awk '{print $1}' | xargs tkn pipelinerun -n infra delete --force
+tkn pipelinerun ls  -n infra --no-headers=true -o json | jq -r '.items[] | select(.status.conditions[].reason!="Running") | .metadata.name' | awk '{print $1}' | xargs tkn pipelinerun -n infra delete --force
 # Delete each node-helm pipeline run whose name starts with node-helm-run
 tkn pipelinerun list -n infra --no-headers=true | awk '/node-helm-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
 # Delete each node-helm pipeline run whose name starts with maven-helm-run
