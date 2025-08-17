@@ -1,10 +1,3 @@
-# Remove all containers
-docker rm -f $(docker ps -a -q)
-# Remove all images
-docker rmi -f $(docker images -a -q)
-# Remove all resources (unused containers, volumes, and networks in addition to images)
-docker system prune -a -f
-
 # Get Tekton pipeline services
 kubectl get svc -n tekton-pipelines
 

@@ -10,6 +10,7 @@
 5. [Kubernetes Dashboard](#kubernetes-dashboard)
 6. [FluxCD UI](#fluxcd-ui)
 7. [Deleting pipeline runs](#deleting-pipeline-runs)
+8. [Removing unused Docker resources](#removing-unused-docker-resources)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -86,4 +87,14 @@ tkn pipelinerun list -n infra --no-headers=true | awk '/node-helm-run/{print $1}
 tkn pipelinerun list -n infra --no-headers=true | awk '/maven-helm-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
 # Delete each node-helm pipeline run whose name starts with maven-lib-run
 tkn pipelinerun list -n infra --no-headers=true | awk '/maven-lib-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
+```
+## Removing unused Docker resources
+The below commands may be used to remove used Docker resources. As is the case with any clean up activities, prune should be used with extreme care. In fact, it should ideally be used on development environments. For example, prune may delete a database volume if it is not currently attached to a running container.
+```
+# Remove all containers
+docker rm -f $(docker ps -a -q)
+# Remove all images
+docker rmi -f $(docker images -a -q)
+# Remove all resources (unused containers, volumes, and networks in addition to images)
+docker system prune -a -f
 ```
