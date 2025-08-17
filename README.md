@@ -9,6 +9,7 @@
 4. [Pipelines](#pipelines)
 5. [Kubernetes Dashboard](#kubernetes-dashboard)
 6. [FluxCD UI](#fluxcd-ui)
+7. [Deleting pipeline runs](#deleting-pipeline-runs)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -73,4 +74,16 @@ If a FluxCD UI is required, Capacitor can be considered. The below command may b
 kubectl apply -f kubernetes/dashboards/capacitor.yaml
 # Expose the capacitor service
 kubectl -n flux-system port-forward svc/capacitor 9000
+```
+## Deleting pipeline runs
+The below commands can be used in deleting pipeline runs:
+```
+# Delete non-running pipeline runs
+tkn pipelinerun ls  -n infra --no-headers=true | awk -v STATUS="Running" '$NF != STATUS {print}' | awk '{print $1}' | xargs tkn pipelinerun -n infra delete --force
+# Delete each node-helm pipeline run whose name starts with node-helm-run
+tkn pipelinerun list -n infra --no-headers=true | awk '/node-helm-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
+# Delete each node-helm pipeline run whose name starts with maven-helm-run
+tkn pipelinerun list -n infra --no-headers=true | awk '/maven-helm-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
+# Delete each node-helm pipeline run whose name starts with maven-lib-run
+tkn pipelinerun list -n infra --no-headers=true | awk '/maven-lib-run/{print $1}' | xargs tkn pipelinerun -n infra delete --force
 ```
