@@ -26,6 +26,8 @@ spec:
       volumeClaimTemplate:
         metadata:
           creationTimestamp: null
+          labels:
+            tekton.dev/pvc-protection-finalizer: remove
         spec:
           accessModes:
             - ReadWriteOnce
@@ -46,6 +48,8 @@ spec:
       volumeClaimTemplate:
         metadata:
           creationTimestamp: null
+          labels:
+            tekton.dev/pvc-protection-finalizer: remove
         spec:
           accessModes:
             - ReadWriteOnce
