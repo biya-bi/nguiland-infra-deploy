@@ -1,9 +1,9 @@
 # Table of Contents
 1. [On-premises deployment](#on-premises-deployment)
-	1. [Setting up Wireguard on both on the cloud virtual machine and on the on-premises machine](#wireguard-vpn).
-	2. [Setting up Nginx on the cloud virtual machine](#nginx-on-the-cloud-virtual-machine).
-	3. [Adding host entries on the on-premises machine](#on-premises-host-entries).
-	4. [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
+	  [Setting up Wireguard on both on the cloud virtual machine and on the on-premises machine](#wireguard-vpn).
+	  [Setting up Nginx on the cloud virtual machine](#nginx-on-the-cloud-virtual-machine).
+	  [Adding host entries on the on-premises machine](#on-premises-host-entries).
+	  [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
 2. [Artifactory](#artifactory)
 	  [Resetting JFOG Admin Credentials](#resetting-jfog-admin-credentials)
 	  [Generating join and master keys](#generating-join-and-master-keys)
