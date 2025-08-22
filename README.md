@@ -5,7 +5,6 @@
 	  [Adding host entries on the on-premises machine](#on-premises-host-entries).
 	  [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
 2. [Artifactory](#artifactory)
-	  [Resetting JFOG Admin Credentials](#resetting-jfog-admin-credentials)
 	  [Generating join and master keys](#generating-join-and-master-keys)
 3. [Pipelines](#pipelines)
 4. [Kubernetes Dashboard](#kubernetes-dashboard)
@@ -35,8 +34,6 @@ On the on-premises machine, the below entries should be added to the /etc/hosts 
 	1. Use kubectl to expose services. The Wireguard client IP address should be used in port forwarding. For example, `kubectl port-forward svc/artifactory-jcr 9001:8082 -n infra --address=10.0.0.2`
 	2. Test artifactory-jcr and artifactory-oss port forwarding using the curl command. If the port forwarding loses connection to the pod after running the curl, restart the pods using a command similar to `kubectl rollout restart deployment <deployment_name> -n infra`, then test the curl again. If the curl now succeeds, stop kubectl port forwarding command for the given service and run step 1 again for the service in question.
 ## Artifactory
-### Resetting JFOG admin credentials
-Independent of the environment, once artifactory-jcr and artifactory-oss deployments are successful, the next step should be to login and change the default passwords to those encrypted by SOPS-AGE and deployed to the cluster. If this is not done, deployments that use secrets deployed in the cluster will fail. For example, pipeline runs will push Docker images to JFrog Container Registry (artifactory-jcr) using secrets deployed in the cluster. This clearly means that the default password of admin user for artifactory-jcr should be changed to that deployed in the cluster for the image push to be successful.
 ### Generating join and master keys
 Join and Master keys can be generated with the below command:
 ```
