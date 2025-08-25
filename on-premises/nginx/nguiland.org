@@ -87,3 +87,63 @@ server {
         include proxy_params;
     }
 }
+
+server {
+    listen 80;
+    server_name int-ostockapi.nguiland.org;
+
+    include /etc/nginx/snippets/letsencrypt.conf;
+
+    # We are redirecting all requests to port 80 to the https server block
+    location / {
+       return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name int-ostockapi.nguiland.org;
+
+    include /etc/nginx/snippets/letsencrypt.conf;
+
+    ssl_certificate /etc/letsencrypt/live/nguiland.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nguiland.org/privkey.pem;
+
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        proxy_pass http://10.0.0.2:9004;
+        include proxy_params;
+    }
+}
+
+server {
+    listen 80;
+    server_name int-ostockweb.nguiland.org;
+
+    include /etc/nginx/snippets/letsencrypt.conf;
+
+    # We are redirecting all requests to port 80 to the https server block
+    location / {
+       return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name int-ostockweb.nguiland.org;
+
+    include /etc/nginx/snippets/letsencrypt.conf;
+
+    ssl_certificate /etc/letsencrypt/live/nguiland.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/nguiland.org/privkey.pem;
+
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        proxy_pass http://10.0.0.2:9005;
+        include proxy_params;
+    }
+}
