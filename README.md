@@ -16,6 +16,7 @@
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
 Set up a Wireguard VPN. There is a good procedure on https://docs.vultr.com/how-to-install-wireguard-vpn-on-debian-12.
+Sample configuration files for the Wireguard client and server are given in the `on-premises/wireguard` directory.
 ### Nginx on the cloud virtual machine
 Install nginx on the cloud virtual machine. An example configuration file is given in on-premises/nginx/nguiland.org. Note how traffic to port 80 (http) is redirected to port 443 (https) in the example file. Also note that in the example file, 10.0.0.2 is assumed to be the Wireguard client IP address.
 ### On-premises host entries
