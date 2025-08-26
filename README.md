@@ -1,11 +1,11 @@
 # Table of Contents
 1. [On-premises deployment](#on-premises-deployment)
-	  [Setting up Wireguard on both on the cloud virtual machine and on the on-premises machine](#wireguard-vpn).
-	  [Setting up Nginx on the cloud virtual machine](#nginx-on-the-cloud-virtual-machine).
-	  [Adding host entries on the on-premises machine](#on-premises-host-entries).
-	  [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
+	  - [Setting up Wireguard on both on the cloud virtual machine and on the on-premises machine](#wireguard-vpn).
+	  - [Setting up Nginx on the cloud virtual machine](#nginx-on-the-cloud-virtual-machine).
+	  - [Adding host entries on the on-premises machine](#on-premises-host-entries).
+	  - [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
 2. [Artifactory](#artifactory)
-	  [Generating join and master keys](#generating-join-and-master-keys)
+	  - [Generating join and master keys](#generating-join-and-master-keys)
 3. [Pipelines](#pipelines)
 4. [Kubernetes Dashboard](#kubernetes-dashboard)
 5. [FluxCD UI](#fluxcd-ui)
