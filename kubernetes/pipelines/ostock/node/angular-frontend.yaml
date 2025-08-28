@@ -53,6 +53,18 @@ spec:
   - name: ssh-directory
     secret:
       secretName: ssh-credentials
+  - name: nginx-config
+    volumeClaimTemplate:
+      metadata:
+        labels:
+          tekton.dev/pvc-protection-finalizer: remove
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Mi
+      status: {}
   params:
   - name: node-repo-url
     value: git@github.com:biya-bi/ostock-angular-frontend.git
