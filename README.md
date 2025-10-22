@@ -46,6 +46,7 @@ Ideally the pipelines should be run in the below order:
 ```
 kubectl create -f kubernetes/pipelines/infra/maven/lib-parent.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/io-utils.yaml
+kubectl create -f kubernetes/pipelines/infra/maven/web-oauth2.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/dto.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/orm.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/cross-cutting-concerns.yaml
