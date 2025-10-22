@@ -53,7 +53,7 @@ kubectl create -f kubernetes/pipelines/ostock/maven/cross-cutting-concerns.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/config-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/eureka-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/gateway-service.yaml
-kubectl create -f kubernetes/pipelines/ostock/maven/licensing-service.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/license-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/organization-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/node/angular-frontend.yaml
 ```
