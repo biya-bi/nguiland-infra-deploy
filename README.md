@@ -45,6 +45,7 @@ The pipeline directory contains manifests that can be used to manually launch pi
 Ideally the pipelines should be run in the below order:
 ```
 kubectl create -f kubernetes/pipelines/infra/maven/lib-parent.yaml
+kubectl create -f kubernetes/pipelines/infra/maven/context.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/io-utils.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/web-oauth2.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/dto.yaml
