@@ -9,7 +9,7 @@ spec:
     - name: flux-gitrepo-namespace
       value: infra
     - name: flux-gitrepo-name
-      value: lib-parent
+      value: dependencies
     - name: context-dir
       value: .
   pipelineRef:
