@@ -52,6 +52,7 @@ kubectl create -f kubernetes/pipelines/infra/maven/web-oauth2.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/dto.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/orm.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/cross-cutting-concerns.yaml
+kubectl create -f kubernetes/pipelines/ostock/maven/ms-parent.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/config-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/eureka-service.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/gateway-service.yaml
