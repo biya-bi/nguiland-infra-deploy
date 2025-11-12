@@ -12,6 +12,7 @@
 6. [Deleting pipeline runs](#deleting-pipeline-runs)
 7. [Removing unused Docker resources](#removing-unused-docker-resources)
 8. [Logging in to GitHub Container Registry](#logging-in-to-github-container-registry)
+9. [Installing the Let's Encrypt certificate](#installing-the-lets-encrypt-certificate)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -116,4 +117,9 @@ kubectl get svc -n tekton-pipelines
 ```
 # This assumes a GitHub Personal Access Token with necessary rights is contained within the GITHUB_PERSONAL_ACCESS_TOKEN environment variable.
 echo $GITHUB_PERSONAL_ACCESS_TOKEN | docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
+```
+## Installing the Let's Encrypt certificate
+The below command can be used to install the Let's Encrypt certificate. The command will prompt deploying a DNS TXT record under the name _acme-challenge.nguiland.org with a given value.
+```
+sudo certbot certonly --server https://acme-v02.api.letsencrypt.org/directory --manual --preferred-challenges dns -d *.nguiland.org
 ```
