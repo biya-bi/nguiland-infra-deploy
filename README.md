@@ -49,6 +49,7 @@ kubectl create -f kubernetes/pipelines/infra/maven/dependencies.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/ms-parent.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/io-utils.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/web-oauth2.yaml
+kubectl create -f kubernetes/pipelines/infra/maven/orm.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/rest.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/dto.yaml
 kubectl create -f kubernetes/pipelines/ostock/maven/orm.yaml
