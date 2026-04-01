@@ -45,6 +45,7 @@ openssl rand -hex 32
 The pipeline directory contains manifests that can be used to manually launch pipelines. This can be done using commands of the form `kubectl apply -f <manifest_path>`. Note that most pipeline runs have an environment parameter which may have to be changed (or commented out) to match on the environment on which the deployment is made.
 Ideally the pipelines should be run in the below order:
 ```
+kubectl create -f kubernetes/pipelines/infra/docker/build.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/dependencies.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/ms-parent.yaml
 kubectl create -f kubernetes/pipelines/infra/maven/io-utils.yaml
