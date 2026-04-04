@@ -122,7 +122,15 @@ kubectl get svc -n tekton-pipelines
 echo $GITHUB_PERSONAL_ACCESS_TOKEN | docker login ghcr.io -u <GITHUB_USERNAME> --password-stdin
 ```
 ## Installing the Let's Encrypt certificate
+Be it manual or automatic, any script about certificates should be run on an instance through which applications are accessed. In our case,
+this is the [Cloud virtual machine](#nginx-on-the-cloud-virtual-machine) on which Nginx is setup.
+### Manual Approach
 The below command can be used to install the Let's Encrypt certificate. The command will prompt deploying a DNS TXT record under the name _acme-challenge.nguiland.org with a given value.
 ```
 sudo certbot certonly --server https://acme-v02.api.letsencrypt.org/directory --manual --preferred-challenges dns -d *.nguiland.org
 ```
+### Automatic Approach
+Since Let's Encrypt certificates expire after three months, it is better to have a way of auto-renewing them before they expire. This
+will ensure that services are not interrupted due to expired certificates. The `certificates/namecheap/auto_renew.sh` script is a working
+example of a script that can be ran once to enable Let's Encrypt certificates for a domain hosted by **namecheap.com**. That script assumes
+a **namecheap** user account on which API access is enabled. Click [here](https://github.com/acmesh-official/acme.sh) to get more information about the script:
