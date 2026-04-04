@@ -5,12 +5,12 @@ set -eou pipefail
 # 1. Define Git repository details
 REPO_URL="https://github.com/acmesh-official/acme.sh.git"
 TAG_NAME="3.1.2"
-SOURCE_DIR="acme_source"
 
-# 2. Clone the tag if it doesn't yet exist.
-if [ ! -d "$SOURCE_DIR" ] || [ ! -f "$SOURCE_DIR/acme.sh" ]; then
-    git clone --depth 1 --branch "$TAG_NAME" "$REPO_URL" "$SOURCE_DIR"
-fi
+# 2. Create a temporary directory for cloning the repository
+SOURCE_DIR=$(mktemp -d)
+
+git clone --depth 1 --branch "$TAG_NAME" "$REPO_URL" "$SOURCE_DIR"
+echo "Cloned acme.sh repository to $SOURCE_DIR"
 
 # 3. Define the credentials directory and set appropriate permissions
 CREDENTIALS_DIR="${HOME}/.nguiland/namecheap/credentials"
@@ -59,3 +59,7 @@ export NAMECHEAP_SOURCEIP=$(curl -s4 https://ifconfig.co/ip)
   --key-file       /etc/letsencrypt/live/nguiland.org/privkey.pem  \
   --fullchain-file /etc/letsencrypt/live/nguiland.org/fullchain.pem \
   --reloadcmd     "service nginx force-reload"
+
+# 13. Clean up the temporary source directory
+rm -rf "$SOURCE_DIR"
+echo "Cleaned up temporary directory $SOURCE_DIR"
