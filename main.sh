@@ -191,6 +191,8 @@ set_oci_publish_pipeline_params() {
   local skip_tls="false"
   local lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
 
+  printf "Retrieved URL from HelmRepository artifactory-oci: %s\n" "${helm_registry_url:-<missing>}"
+
   if [[ "${lower_insecure_status}" == "true" ]]; then
     skip_tls="true"
   fi
@@ -199,6 +201,14 @@ set_oci_publish_pipeline_params() {
   yq -i "(.spec.params[] | select(.name == \"skipTls\")).value = \"${skip_tls}\"" "${manifest_path}"
 
   if [[ -n "${helm_registry_url}" ]]; then
+    local registry_suffix="org.nguiland.infra"
+    local normalized_registry_url="${helm_registry_url%/}"
+
+    if [[ "${normalized_registry_url}" != "${registry_suffix}" && "${normalized_registry_url}" != */${registry_suffix} ]]; then
+      normalized_registry_url="${normalized_registry_url}/${registry_suffix}"
+    fi
+
+    helm_registry_url="${normalized_registry_url}"
     printf "Setting helm-registry to %s based on artifactory-oci HelmRepository URL: %s in manifest %s\n" "${helm_registry_url}" "${helm_registry_url}" "${manifest_path}"
     yq -i "(.spec.params[] | select(.name == \"helm-registry\")).value = \"${helm_registry_url}\"" "${manifest_path}"
   fi
