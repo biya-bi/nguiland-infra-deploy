@@ -163,10 +163,10 @@ set_docker_build_pipeline_params() {
     return 1
   fi
 
-  local image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.image-pull-endpoint}' 2>/dev/null || true)
+  local image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.image-push-endpoint}' 2>/dev/null || true)
 
   if [[ -z "${image_push_endpoint}" ]]; then
-    echo "Failed to retrieve image-pull-endpoint from env-settings ConfigMap in namespace ${namespace}" >&2
+    echo "Failed to retrieve image-push-endpoint from env-settings ConfigMap in namespace ${namespace}" >&2
     return 1
   fi
 
