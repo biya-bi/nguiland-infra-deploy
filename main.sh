@@ -45,7 +45,16 @@ wait_for_resource() {
   local resource_type="$2"
   local resource_name="$3"
   local condition="$4"
-  local timeout="${5:-10m}"
+  local failure_condition=""
+  local timeout=""
+
+  if [[ -n "${6}" ]]; then
+    failure_condition="${5}"
+    timeout="${6:-10m}"
+  else
+    timeout="${5:-10m}"
+  fi
+
   local deadline=$(($(date +%s) + $(timeout_to_seconds "${timeout}")))
   local dots=0
   local dot_states=("   " ".  " ".. " "...")
@@ -65,6 +74,13 @@ wait_for_resource() {
       if kubectl wait --for="${condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=5s >/dev/null 2>&1; then
         printf "\n"
         return 0
+      fi
+    fi
+
+    if [[ -n "${failure_condition}" ]]; then
+      if kubectl wait --for="${failure_condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=5s >/dev/null 2>&1; then
+        printf "\n"
+        return 1
       fi
     fi
 
@@ -188,12 +204,12 @@ set_oci_publish_pipeline_params() {
   fi
 }
 
-wait_for_pipelinerun_success() {
+wait_for_pipelinerun_completion() {
   local namespace="${1}"
   local pipelinerun_name="${2}"
   local timeout="${3:-1h}"
 
-  if wait_for_resource "${namespace}" "pipelinerun" "${pipelinerun_name}" "condition=Succeeded" "${timeout}"; then
+  if wait_for_resource "${namespace}" "pipelinerun" "${pipelinerun_name}" "condition=Succeeded" "condition=Succeeded=False" "${timeout}"; then
     echo "PipelineRun ${pipelinerun_name} succeeded"
     return 0
   fi
@@ -213,7 +229,7 @@ run_pipeline() {
   local pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')
   echo "Triggered PipelineRun ${pipelinerun_name}"
 
-  wait_for_pipelinerun_success "${namespace}" "${pipelinerun_name}" "1h"
+  wait_for_pipelinerun_completion "${namespace}" "${pipelinerun_name}" "1h"
 }
 
 run_docker_build_pipeline() {
