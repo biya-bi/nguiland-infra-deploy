@@ -1,0 +1,62 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  annotations: {}
+  generateName: helm-chart-oci-publish-run-
+  namespace: infra
+spec:
+  params:
+    - name: namespace
+      value: infra
+    - name: repository
+      value: helm-addons
+    - name: helm-charts-dir
+      value: addons
+    - name: helm-registry
+      value: oci://artifactory-jcr.infra/docker-local
+    - name: artifactory-readiness-timeout
+      value: 15m
+    - name: skipTls
+      value: "false"
+  pipelineRef:
+    name: helm-chart-oci-publish
+  taskRunTemplate:
+    podTemplate:
+      securityContext:
+        fsGroup: 65532
+    serviceAccountName: tekton-pipeline
+  timeouts:
+    pipeline: 1h0m0s
+  workspaces:
+    - name: helm-source
+      volumeClaimTemplate:
+        metadata:
+          creationTimestamp: null
+          labels:
+            tekton.dev/pvc-protection-finalizer: remove
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 100Mi
+        status: {}
+    - name: manifest-dir
+      volumeClaimTemplate:
+        metadata:
+          creationTimestamp: null
+          labels:
+            tekton.dev/pvc-protection-finalizer: remove
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Mi
+        status: {}
+    - name: docker-config
+      secret:
+        secretName: docker-config
+    - name: ssh-directory
+      secret:
+        secretName: ssh-credentials
