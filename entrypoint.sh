@@ -260,7 +260,7 @@ run_oci_publish_pipeline() {
   run_pipeline "${namespace}" "${manifest_path}"
 }
 
-run() {
+main() {
   local namespace="infra"
   local addons=(artifactory-oss-snapshot-cleanup artifactory-oss-trash-cleanup)
 
@@ -272,4 +272,8 @@ run() {
   resume_helmreleases "${namespace}" "${addons[@]}"
 }
 
-run
+# Direct-execution guard: only invoke main when this script is executed directly,
+# not when it is sourced into another shell.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi
