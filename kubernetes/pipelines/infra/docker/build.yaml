@@ -12,6 +12,10 @@ spec:
       value: docker
     - name: context-dir
       value: .
+    - name: always-build
+      value: "false"
+    - name: image-push-endpoint
+      value: artifactory-jcr.infra
   pipelineRef:
     name: docker-build
   taskRunTemplate:
