@@ -214,7 +214,7 @@ wait_for_pipelinerun_completion() {
     return 0
   fi
 
-  echo "PipelineRun ${pipelinerun_name} failed or timed out" >&2
+  printf '\033[31mPipelineRun %s failed or timed out\033[0m\n' "${pipelinerun_name}" >&2
   kubectl describe pipelinerun "${pipelinerun_name}" -n "${namespace}" || true
   return 1
 }
