@@ -52,7 +52,7 @@ wait_for_resource() {
   local failure_condition=""
   local timeout=""
 
-  if [[ -n "${6}" ]]; then
+  if [[ -n "${6:-}" ]]; then
     failure_condition="${5}"
     timeout="${6:-10m}"
   else
