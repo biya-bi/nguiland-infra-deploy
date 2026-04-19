@@ -4,6 +4,18 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Portable yq in-place edit function to handle both mikefarah/yq (Go) and kislyuk/yq (Python)
+yq_i() {
+  local expression="$1"
+  local file="$2"
+
+  if yq --version 2>&1 | grep -q "mikefarah"; then
+    yq -i "${expression}" "${file}"
+  else
+    yq -yi "${expression}" "${file}"
+  fi
+}
+
 # Convert a duration string into seconds.
 timeout_to_seconds() {
   local timeout="${1}"
@@ -175,9 +187,9 @@ set_docker_build_pipeline_params() {
   fi
 
   printf "Setting image-push-endpoint to %s in manifest %s\n" "${image_push_endpoint}" "${manifest_path}"
-  yq -i "(.spec.params[] | select(.name == \"image-push-endpoint\")).value = \"${image_push_endpoint}\"" "${manifest_path}"
+  yq_i "(.spec.params[] | select(.name == \"image-push-endpoint\")).value = \"${image_push_endpoint}\"" "${manifest_path}"
   printf "Setting always-build to true in manifest %s\n" "${manifest_path}"
-  yq -i "(.spec.params[] | select(.name == \"always-build\")).value = \"true\"" "${manifest_path}"
+  yq_i "(.spec.params[] | select(.name == \"always-build\")).value = \"true\"" "${manifest_path}"
 }
 
 set_oci_publish_pipeline_params() {
@@ -190,8 +202,8 @@ set_oci_publish_pipeline_params() {
   fi
 
   local helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
-  local insecure_status=$(echo "${helm_repo_json}" | yq '.spec.insecure // "false"' -o=json | tr -d '"')
-  local helm_registry_url=$(echo "${helm_repo_json}" | yq '.spec.url // ""' -o=json | tr -d '"')
+  local insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
+  local helm_registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
   local skip_tls="false"
   local lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
 
@@ -202,7 +214,7 @@ set_oci_publish_pipeline_params() {
   fi
 
   printf "Setting skipTls to %s based on artifactory-oci HelmRepository insecure status: %s in manifest %s\n" "${skip_tls}" "${insecure_status:-<missing>}" "${manifest_path}"
-  yq -i "(.spec.params[] | select(.name == \"skipTls\")).value = \"${skip_tls}\"" "${manifest_path}"
+  yq_i "(.spec.params[] | select(.name == \"skipTls\")).value = \"${skip_tls}\"" "${manifest_path}"
 
   if [[ -n "${helm_registry_url}" ]]; then
     local registry_suffix="org.nguiland.infra"
@@ -214,7 +226,7 @@ set_oci_publish_pipeline_params() {
 
     helm_registry_url="${normalized_registry_url}"
     printf "Setting helm-registry to %s based on artifactory-oci HelmRepository URL: %s in manifest %s\n" "${helm_registry_url}" "${helm_registry_url}" "${manifest_path}"
-    yq -i "(.spec.params[] | select(.name == \"helm-registry\")).value = \"${helm_registry_url}\"" "${manifest_path}"
+    yq_i "(.spec.params[] | select(.name == \"helm-registry\")).value = \"${helm_registry_url}\"" "${manifest_path}"
   fi
 }
 
