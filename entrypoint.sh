@@ -103,6 +103,17 @@ wait_for_resource() {
       fi
     fi
 
+    # Fail-fast: Check if the pod is in a bad state
+    if [[ "${resource_type}" == "deployment" || "${resource_type}" == "pod" ]]; then
+      local status_json
+      status_json=$(kubectl get "${resource_type}" "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
+      if echo "${status_json}" | jq -e '.status.containerStatuses[]? | select(.state.waiting.reason == "CrashLoopBackOff" or .state.waiting.reason == "Error")' >/dev/null 2>&1; then
+        printf "\n\033[0;31mERROR: %s/%s entered a terminal failure state (CrashLoopBackOff/Error).\033[0m\n" "${resource_type}" "${resource_name}"
+        kubectl logs -n "${namespace}" "${resource_type}/${resource_name}" --all-containers --tail=20 || true
+        return 1
+      fi
+    fi
+
     if [[ -n "${failure_condition}" ]]; then
       if kubectl wait --for="${failure_condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=5s >/dev/null 2>&1; then
         printf "\n"
