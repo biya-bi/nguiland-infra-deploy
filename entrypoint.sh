@@ -4,6 +4,12 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+cleanup_terminal() {
+  printf '\033[?25h'
+}
+trap cleanup_terminal EXIT
+trap 'exit 130' INT
+
 # Portable yq in-place edit function to handle both mikefarah/yq (Go) and kislyuk/yq (Python)
 yq_i() {
   local expression="$1"
@@ -78,7 +84,6 @@ wait_for_resource() {
   local message=$(get_wait_message "${resource_type}" "${resource_name}" "${condition}" "${namespace}")
   printf "%s" "${message}"
   printf '\033[?25l'
-  trap 'printf "\033[?25h"' RETURN
 
   while true; do
     if [[ "${condition}" == "exists" ]]; then
@@ -156,7 +161,6 @@ copy_pipelinerun_manifest() {
     return 1
   fi
 
-  local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   local manifest_path="${script_dir}/kubernetes/pipelines/${relative_path}"
 
   if [[ ! -f "${manifest_path}" ]]; then
