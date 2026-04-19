@@ -49,7 +49,8 @@ get_wait_message() {
     printf "Waiting for %s/%s to exist in namespace %s" "${resource_type}" "${resource_name}" "${namespace}"
   elif [[ "${condition}" == condition=* ]]; then
     local condition_value=${condition#condition=}
-    local condition_text=$(printf "%s" "${condition_value}" | tr '[:upper:]' '[:lower:]')
+    local condition_text
+    condition_text=$(printf "%s" "${condition_value}" | tr '[:upper:]' '[:lower:]')
 
     if [[ "${condition_text}" =~ ed$ ]]; then
       local condition_verb=${condition_text%ed}
@@ -77,11 +78,15 @@ wait_for_resource() {
     timeout="${5:-10m}"
   fi
 
-  local deadline=$(($(date +%s) + $(timeout_to_seconds "${timeout}")))
+  local timeout_in_seconds
+  timeout_in_seconds=$(timeout_to_seconds "${timeout}")
+  local deadline
+  deadline=$(($(date +%s) + timeout_in_seconds))
   local dots=0
   local dot_states=("   " ".  " ".. " "...")
 
-  local message=$(get_wait_message "${resource_type}" "${resource_name}" "${condition}" "${namespace}")
+  local message
+  message=$(get_wait_message "${resource_type}" "${resource_name}" "${condition}" "${namespace}")
   printf "%s" "${message}"
   printf '\033[?25l'
 
@@ -168,7 +173,8 @@ copy_pipelinerun_manifest() {
     return 1
   fi
 
-  local tmp_file=$(mktemp)
+  local tmp_file
+  tmp_file=$(mktemp)
   cp "${manifest_path}" "${tmp_file}"
 
   echo "${tmp_file}"
@@ -183,7 +189,8 @@ set_docker_build_pipeline_params() {
     return 1
   fi
 
-  local image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.image-push-endpoint}' 2>/dev/null || true)
+  local image_push_endpoint
+  image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.image-push-endpoint}' 2>/dev/null || true)
 
   if [[ -z "${image_push_endpoint}" ]]; then
     echo "Failed to retrieve image-push-endpoint from env-settings ConfigMap in namespace ${namespace}" >&2
@@ -205,11 +212,15 @@ set_oci_publish_pipeline_params() {
     return 1
   fi
 
-  local helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
-  local insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
-  local helm_registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
+  local helm_repo_json
+  helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
+  local insecure_status
+  insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
+  local helm_registry_url
+  helm_registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
   local skip_tls="false"
-  local lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
+  local lower_insecure_status
+  lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
 
   printf "Retrieved URL from HelmRepository artifactory-oci: %s\n" "${helm_registry_url:-<missing>}"
 
@@ -254,9 +265,10 @@ run_pipeline() {
   local manifest_path="${2}"
 
   echo "Applying PipelineRun manifest: ${manifest_path}"
-  trap 'rm -f -- "${manifest_path}"' RETURN
+  trap "rm -f -- '${manifest_path}'" RETURN
 
-  local pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')
+  local pipelinerun_name
+  pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')
   echo "Triggered PipelineRun ${pipelinerun_name}"
 
   wait_for_pipelinerun_completion "${namespace}" "${pipelinerun_name}" "1h"
@@ -266,7 +278,8 @@ run_docker_build_pipeline() {
   local namespace="${1}"
   local relative_path="${2}"
 
-  local manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
+  local manifest_path
+  manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
   set_docker_build_pipeline_params "${namespace}" "${manifest_path}"
   run_pipeline "${namespace}" "${manifest_path}"
 }
@@ -275,7 +288,8 @@ run_oci_publish_pipeline() {
   local namespace="${1}"
   local relative_path="${2}"
 
-  local manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
+  local manifest_path
+  manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
   set_oci_publish_pipeline_params "${namespace}" "${manifest_path}"
   run_pipeline "${namespace}" "${manifest_path}"
 }
