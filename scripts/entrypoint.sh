@@ -343,11 +343,15 @@ main() {
   local namespace="infra"
 
   local addons=()
-  while IFS= read -r line; do
+  while IFS= read -r line || [[ -n "$line" ]]; do
     addons+=("$line")
   done < <(get_artifactory_addons "${namespace}")
 
   suspend_helmreleases "${namespace}" "${addons[@]}"
+
+  # Ensure we resume even if the middle steps fail
+  trap 'resume_helmreleases "${namespace}" "${addons[@]}"; cleanup_terminal' EXIT
+
   wait_for_deployment_available "${namespace}" "artifactory-jcr" "15m"
 
   local docker_build_manifest_path="infra/docker/build.yaml"
@@ -366,7 +370,10 @@ main() {
   run_docker_build_pipeline "${namespace}" "$docker_build_manifest_path"
   run_oci_publish_pipeline "${namespace}" "$oci_publish_manifest_path"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
+
+  # Explicitly resume and clear the trap if we finish normally
   resume_helmreleases "${namespace}" "${addons[@]}"
+  trap - EXIT
 }
 
 # Direct-execution guard: only invoke main when this script is executed directly,
