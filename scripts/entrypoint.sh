@@ -3,6 +3,7 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+pipelines_manifest_dir="${script_dir}/../kubernetes/pipelines"
 
 cleanup_terminal() {
   printf '\033[?25h'
@@ -181,7 +182,7 @@ copy_pipelinerun_manifest() {
     return 1
   fi
 
-  local manifest_path="${script_dir}/../kubernetes/pipelines/${relative_path}"
+  local manifest_path="${pipelines_manifest_dir}/${relative_path}"
 
   if [[ ! -f "${manifest_path}" ]]; then
     echo "PipelineRun manifest not found: ${manifest_path}" >&2
@@ -322,6 +323,22 @@ get_artifactory_addons() {
   '
 }
 
+get_pipeline_name() {
+  local relative_path="${1}"
+  local manifest_path="${pipelines_manifest_dir}/${relative_path}"
+
+  if [[ ! -f "${manifest_path}" ]]; then
+    echo "Pipeline manifest not found: ${manifest_path}" >&2
+    return 1
+  fi
+
+  if yq --version 2>&1 | grep -q "mikefarah"; then
+    yq '.spec.pipelineRef.name' "${manifest_path}"
+  else
+    yq -r '.spec.pipelineRef.name' "${manifest_path}"
+  fi
+}
+
 main() {
   local namespace="infra"
 
@@ -332,9 +349,22 @@ main() {
 
   suspend_helmreleases "${namespace}" "${addons[@]}"
   wait_for_deployment_available "${namespace}" "artifactory-jcr" "15m"
-  wait_for_pipeline_exists "${namespace}" "docker-build" "15m"
-  run_docker_build_pipeline "${namespace}" "infra/docker/build.yaml"
-  run_oci_publish_pipeline "${namespace}" "infra/oci/publish.yaml"
+
+  local docker_build_manifest_path="infra/docker/build.yaml"
+  local oci_publish_manifest_path="infra/oci/publish.yaml"
+
+  local pipeline_manifest_paths=()
+  pipeline_manifest_paths+=("${docker_build_manifest_path}")
+  pipeline_manifest_paths+=("${oci_publish_manifest_path}")
+
+  local pipeline_name
+  for relative_path in "${pipeline_manifest_paths[@]}"; do
+    pipeline_name=$(get_pipeline_name "$relative_path")
+    wait_for_pipeline_exists "${namespace}" "${pipeline_name}" "15m"
+  done
+
+  run_docker_build_pipeline "${namespace}" "$docker_build_manifest_path"
+  run_oci_publish_pipeline "${namespace}" "$oci_publish_manifest_path"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
   resume_helmreleases "${namespace}" "${addons[@]}"
 }
