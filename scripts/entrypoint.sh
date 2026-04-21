@@ -177,7 +177,7 @@ copy_pipelinerun_manifest() {
     return 1
   fi
 
-  local manifest_path="${script_dir}/kubernetes/pipelines/${relative_path}"
+  local manifest_path="${script_dir}/../kubernetes/pipelines/${relative_path}"
 
   if [[ ! -f "${manifest_path}" ]]; then
     echo "PipelineRun manifest not found: ${manifest_path}" >&2
