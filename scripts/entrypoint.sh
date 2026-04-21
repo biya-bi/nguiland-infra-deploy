@@ -144,6 +144,10 @@ wait_for_helmrelease_exists() {
   wait_for_resource "${1}" "helmrelease" "${2}" "exists" "${3:-10m}"
 }
 
+wait_for_pipeline_exists() {
+  wait_for_resource "${1}" "pipeline" "${2}" "exists" "${3:-10m}"
+}
+
 suspend_helmreleases() {
   local namespace="${1}"
   shift
@@ -328,6 +332,7 @@ main() {
 
   suspend_helmreleases "${namespace}" "${addons[@]}"
   wait_for_deployment_available "${namespace}" "artifactory-jcr" "15m"
+  wait_for_pipeline_exists "${namespace}" "docker-build" "15m"
   run_docker_build_pipeline "${namespace}" "infra/docker/build.yaml"
   run_oci_publish_pipeline "${namespace}" "infra/oci/publish.yaml"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
