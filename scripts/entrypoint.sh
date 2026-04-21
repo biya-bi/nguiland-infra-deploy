@@ -305,9 +305,26 @@ run_oci_publish_pipeline() {
   run_pipeline "${namespace}" "${manifest_path}"
 }
 
+get_artifactory_addons() {
+  local namespace="${1}"
+
+  kubectl get helmrelease -n "${namespace}" -o json | jq -r '
+    .items[] |
+    select(
+      .spec.dependsOn // [] |
+      any(.name == "artifactory-jcr" or .name == "artifactory-oss")
+    ) |
+    .metadata.name
+  '
+}
+
 main() {
   local namespace="infra"
-  local addons=(artifactory-oss-snapshot-cleanup artifactory-oss-trash-cleanup)
+
+  local addons=()
+  while IFS= read -r line; do
+    addons+=("$line")
+  done < <(get_artifactory_addons "${namespace}")
 
   suspend_helmreleases "${namespace}" "${addons[@]}"
   wait_for_deployment_available "${namespace}" "artifactory-jcr" "15m"
