@@ -56,6 +56,8 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    client_max_body_size 0;
+
     location / {
         proxy_pass http://10.0.0.2:9002;
         include proxy_params;
