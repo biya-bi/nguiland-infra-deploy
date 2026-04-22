@@ -5,6 +5,8 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pipelines_manifest_dir="${script_dir}/../kubernetes/pipelines"
 
+. "${script_dir}/port-forward.sh"
+
 cleanup_terminal() {
   printf '\033[?25h'
 }
@@ -352,7 +354,9 @@ main() {
   # Ensure we resume even if the middle steps fail
   trap 'resume_helmreleases "${namespace}" "${addons[@]+"${addons[@]}"}" || true; cleanup_terminal' EXIT
 
-  wait_for_deployment_available "${namespace}" "artifactory-jcr" "15m"
+  local service_name="artifactory-jcr"
+
+  wait_for_deployment_available "${namespace}" "${service_name}" "15m"
 
   local docker_build_manifest_path="infra/docker/build.yaml"
   local oci_publish_manifest_path="infra/oci/publish.yaml"
@@ -367,12 +371,20 @@ main() {
     wait_for_pipeline_exists "${namespace}" "${pipeline_name}" "15m"
   done
 
+  # Before running the docker-publish pipeline, we need to start a port-forward
+  # for artifactory-jcr so that the pipeline does not fail. This is particularly
+  # important on environments (such as int) with Wireguard
+  start_port_forward_by_name "${service_name}" "${namespace}"
+
   run_docker_build_pipeline "${namespace}" "$docker_build_manifest_path"
   run_oci_publish_pipeline "${namespace}" "$oci_publish_manifest_path"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
   # Explicitly resume and clear the trap if we finish normally
   resume_helmreleases "${namespace}" "${addons[@]+"${addons[@]}"}"
+
+  start_port_forwards
+
   trap - EXIT
 }
 
