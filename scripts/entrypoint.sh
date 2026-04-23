@@ -28,10 +28,10 @@ main() {
     addons+=("$line")
   done < <(get_dependent_helmreleases "${namespace}" "${jcr_service_name}" "${oss_service_name}")
 
-  suspend_helmreleases "${namespace}" "${addons[@]+"${addons[@]}"}"
+  suspend_helmreleases "${namespace}" "${addons[@]:-}"
 
   # Ensure we resume even if the middle steps fail
-  trap 'resume_helmreleases "${namespace}" "${addons[@]+"${addons[@]}"}" || true; cleanup_terminal' EXIT
+  trap "resume_helmreleases ${namespace} ${addons[*]:-} || true; cleanup_terminal" EXIT
 
   wait_for_deployment_available "${namespace}" "${jcr_service_name}" "15m"
 
@@ -59,7 +59,7 @@ main() {
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
   # Explicitly resume and clear the trap if we finish normally
-  resume_helmreleases "${namespace}" "${addons[@]+"${addons[@]}"}"
+  resume_helmreleases "${namespace}" "${addons[@]:-}"
 
   start_port_forwards
 
