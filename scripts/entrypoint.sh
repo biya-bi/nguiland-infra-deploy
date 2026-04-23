@@ -16,26 +16,6 @@ cleanup_terminal() {
 trap cleanup_terminal EXIT
 trap 'exit 130' INT
 
-run_docker_build_pipeline() {
-  local namespace="${1}"
-  local relative_path="${2}"
-
-  local manifest_path
-  manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
-  set_docker_build_pipeline_params "${namespace}" "${manifest_path}"
-  run_pipeline "${namespace}" "${manifest_path}"
-}
-
-run_oci_publish_pipeline() {
-  local namespace="${1}"
-  local relative_path="${2}"
-
-  local manifest_path
-  manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
-  set_oci_publish_pipeline_params "${namespace}" "${manifest_path}"
-  run_pipeline "${namespace}" "${manifest_path}"
-}
-
 main() {
   local namespace="infra"
 
@@ -72,8 +52,8 @@ main() {
   # important on environments (such as int) with Wireguard
   start_port_forward_by_name "${jcr_service_name}" "${namespace}"
 
-  run_docker_build_pipeline "${namespace}" "$docker_build_manifest_path"
-  run_oci_publish_pipeline "${namespace}" "$oci_publish_manifest_path"
+  run_docker_build_pipeline "${namespace}" "${docker_build_manifest_path}"
+  run_oci_publish_pipeline "${namespace}" "${oci_publish_manifest_path}"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
   # Explicitly resume and clear the trap if we finish normally

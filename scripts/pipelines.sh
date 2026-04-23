@@ -116,16 +116,37 @@ wait_for_pipelinerun_completion() {
 
 run_pipeline() {
   local namespace="${1}"
-  local manifest_path="${2}"
+  local relative_path="${2}"
+  local param_setter_func="${3:-}"
+
+  local manifest_path
+  manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
+  # File created; ensure it is cleaned up even if subsequent steps fail
+  trap 'rm -f -- "${manifest_path}"' RETURN
+
+  if [[ -n "${param_setter_func}" ]]; then
+    "${param_setter_func}" "${namespace}" "${manifest_path}"
+  fi
 
   echo "Applying PipelineRun manifest: ${manifest_path}"
-  trap "rm -f -- '${manifest_path}'" RETURN
 
   local pipelinerun_name
   pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')
   echo "Triggered PipelineRun ${pipelinerun_name}"
 
   wait_for_pipelinerun_completion "${namespace}" "${pipelinerun_name}" "1h"
+}
+
+run_docker_build_pipeline() {
+  local namespace="${1}"
+  local relative_path="${2}"
+  run_pipeline "${namespace}" "${relative_path}" "set_docker_build_pipeline_params"
+}
+
+run_oci_publish_pipeline() {
+  local namespace="${1}"
+  local relative_path="${2}"
+  run_pipeline "${namespace}" "${relative_path}" "set_oci_publish_pipeline_params"
 }
 
 get_pipeline_name() {
