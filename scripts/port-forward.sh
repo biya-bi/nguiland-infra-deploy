@@ -17,9 +17,7 @@ get_port_forward_mapping() {
   local target_namespace="$2"
 
   for mapping in "${port_forward_mappings[@]}"; do
-    local rest="${mapping#*:}"
-    local service_name="${rest%:*}"
-    local namespace="${rest##*:}"
+    IFS=: read -r _ service_name namespace <<< "${mapping}"
 
     if [[ "${service_name}" == "${target_service_name}" && "${namespace}" == "${target_namespace}" ]]; then
       echo "${mapping}"
@@ -80,10 +78,7 @@ start_single_port_forward() {
 
 start_port_forwards() {
   for mapping in "${port_forward_mappings[@]}"; do
-    local host_port="${mapping%%:*}"
-    local rest="${mapping#*:}"
-    local service_name="${rest%:*}"
-    local namespace="${rest##*:}"
+    IFS=: read -r host_port service_name namespace <<< "${mapping}"
 
     start_single_port_forward "${host_port}" "${service_name}" "${namespace}"
   done

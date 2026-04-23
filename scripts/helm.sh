@@ -38,9 +38,8 @@ get_dependent_helmreleases() {
 suspend_helmreleases() {
   local namespace="${1}"
   shift
-  local release_names=("${@+"$@"}")
 
-  for release_name in "${release_names[@]+"${release_names[@]}"}"; do
+  for release_name in "$@"; do
     wait_for_helmrelease_exists "${namespace}" "${release_name}" "10m"
     flux suspend hr "${release_name}" -n "${namespace}"
   done
@@ -49,9 +48,8 @@ suspend_helmreleases() {
 resume_helmreleases() {
   local namespace="${1}"
   shift
-  local release_names=("${@+"$@"}")
 
-  for release_name in "${release_names[@]+"${release_names[@]}"}"; do
+  for release_name in "$@"; do
     flux resume hr "${release_name}" -n "${namespace}"
   done
 }
