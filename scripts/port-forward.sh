@@ -50,8 +50,6 @@ start_single_port_forward() {
   local host_port="$1"
   local service_name="$2"
   local namespace="$3"
-  
-  local service_port
 
   if lsof -Pi :"$host_port" -sTCP:LISTEN -t >/dev/null 2>&1; then
     if [[ "${NGUILAND_FORCE_PORT_FORWARD:-false}" == "true" ]]; then
@@ -67,6 +65,8 @@ start_single_port_forward() {
     printf "${YELLOW}WARN: Service '%s' not found in namespace '%s'. Skipping...${NO_COLOR}\n" "${service_name}" "${namespace}"
     return 0 # Indicate success for this service (skipped)
   fi
+
+  local service_port
 
   service_port=$(kubectl get svc "${service_name}" -n "${namespace}" -o jsonpath='{.spec.ports[0].port}')
   nohup kubectl port-forward --address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}" svc/"${service_name}" "${host_port}:${service_port}" -n "${namespace}" >/dev/null 2>&1 &
