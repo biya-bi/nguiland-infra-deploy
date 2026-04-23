@@ -23,6 +23,7 @@ main() {
   local oss_service_name="artifactory-oss"
 
   local addons=()
+  local line
   while IFS= read -r line || [[ -n "$line" ]]; do
     addons+=("$line")
   done < <(get_dependent_helmreleases "${namespace}" "${jcr_service_name}" "${oss_service_name}")
@@ -42,6 +43,7 @@ main() {
   pipeline_manifest_paths+=("${oci_publish_manifest_path}")
 
   local pipeline_name
+  local relative_path
   for relative_path in "${pipeline_manifest_paths[@]}"; do
     pipeline_name=$(get_pipeline_name "$relative_path")
     wait_for_pipeline_exists "${namespace}" "${pipeline_name}" "15m"

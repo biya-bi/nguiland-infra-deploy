@@ -16,6 +16,10 @@ get_port_forward_mapping() {
   local target_service_name="$1"
   local target_namespace="$2"
 
+  local mapping
+  local _
+  local service_name
+  local namespace
   for mapping in "${port_forward_mappings[@]}"; do
     IFS=: read -r _ service_name namespace <<< "${mapping}"
 
@@ -77,6 +81,10 @@ start_single_port_forward() {
 }
 
 start_port_forwards() {
+  local mapping
+  local host_port
+  local service_name
+  local namespace
   for mapping in "${port_forward_mappings[@]}"; do
     IFS=: read -r host_port service_name namespace <<< "${mapping}"
 

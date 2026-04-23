@@ -39,6 +39,7 @@ suspend_helmreleases() {
   local namespace="${1}"
   shift
 
+  local release_name
   for release_name in "$@"; do
     wait_for_helmrelease_exists "${namespace}" "${release_name}" "10m"
     flux suspend hr "${release_name}" -n "${namespace}"
@@ -49,6 +50,7 @@ resume_helmreleases() {
   local namespace="${1}"
   shift
 
+  local release_name
   for release_name in "$@"; do
     flux resume hr "${release_name}" -n "${namespace}"
   done
