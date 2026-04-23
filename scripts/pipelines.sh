@@ -122,7 +122,7 @@ run_pipeline() {
   local manifest_path
   manifest_path=$(copy_pipelinerun_manifest "${relative_path}")
   # File created; ensure it is cleaned up even if subsequent steps fail
-  trap 'rm -f -- "${manifest_path}"' RETURN
+  trap "rm -f -- '${manifest_path}'" RETURN
 
   if [[ -n "${param_setter_func}" ]]; then
     "${param_setter_func}" "${namespace}" "${manifest_path}"
