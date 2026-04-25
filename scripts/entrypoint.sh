@@ -19,6 +19,8 @@ trap 'exit 130' INT
 main() {
   local namespace="infra"
 
+  local port_forward_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
+
   local jcr_service_name="artifactory-jcr"
   local oss_service_name="artifactory-oss"
 
@@ -52,7 +54,7 @@ main() {
   # Before running the docker-publish pipeline, we need to start a port-forward
   # for artifactory-jcr so that the pipeline does not fail. This is particularly
   # important on environments (such as int) with Wireguard
-  start_port_forward_by_name "${jcr_service_name}" "${namespace}"
+  start_port_forward_by_name "${port_forward_address}" "${jcr_service_name}" "${namespace}"
 
   run_docker_build_pipeline "${namespace}" "${docker_build_manifest_path}"
   run_oci_publish_pipeline "${namespace}" "${oci_publish_manifest_path}"
@@ -61,7 +63,7 @@ main() {
   # Explicitly resume and clear the trap if we finish normally
   resume_helmreleases "${namespace}" "${addons[@]:-}"
 
-  start_port_forwards
+  start_port_forwards "${port_forward_address}"
 
   trap - EXIT
 }
