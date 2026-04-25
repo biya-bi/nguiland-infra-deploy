@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 
+# -----------------------------------------------------------------------------
+# Environment Variables (Optional Overrides)
+# -----------------------------------------------------------------------------
+# NGUILAND_PORT_FORWARD_ADDRESS  : The IP or hostname to bind the tunnels to.
+#                                  Defaults to 'localhost'.
+#                                  Example: export NGUILAND_PORT_FORWARD_ADDRESS="10.0.0.2"
+#
+# NGUILAND_PORT_FORWARD_LOG_FILE : The absolute or relative path for the log file.
+#                                  Defaults to 'port-forward.log'.
+#                                  Example: export NGUILAND_PORT_FORWARD_LOG_FILE="/var/log/pf.log"
+# -----------------------------------------------------------------------------
+
 set -euo pipefail
+
+port_forward_script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+source "${port_forward_script_dir}/logger.sh"
 
 YELLOW='\033[0;33m'
 GREEN='\033[0;32m'
@@ -92,7 +107,9 @@ start_single_port_forward() {
     # Verify if the tunnel is actually functional
     if ! nc -z -w 3 "$host_address" "$host_port" > /dev/null 2>&1; then
         printf "${YELLOW}Zombie port-forward detected on %s:%s. Cleaning up...${NO_COLOR}\n" "${host_display}" "${host_port}"
-        lsof -ti @"$host_address":"$host_port" | xargs -r kill -9
+        local pids
+        pids=$(lsof -tni @"$host_address":"$host_port" -sTCP:LISTEN || true)
+        [[ -n "$pids" ]] && kill -9 $pids 2>/dev/null || true
         printf "${GREEN}Restarting port-forward on %s:%s...${NO_COLOR}\n" "${host_address}" "${host_port}"
     else
       printf "${YELLOW}WARN: Port %s on %s is active and healthy. Skipping...${NO_COLOR}\n" "${host_port}" "${host_display}"
@@ -134,8 +151,66 @@ start_port_forwards() {
   done
 }
 
+watch_port_forwards() {
+  local host_address="$1"
+  local log_file="$2"
+
+  # Initialize the timer
+  local last_rotation=$(date +%s)
+  local current_time
+
+  while true; do
+    current_time=$(date +%s)
+
+    # 1. DELETE .old files more than 2 hours (7200 seconds) old
+    find "$(dirname "$log_file")" -name "$(basename "$log_file").old" -mmin +120 -delete 2>/dev/null || true
+
+    # 2. ROTATE every 1 hour (3600 seconds) regardless of recent writes
+    if (( current_time - last_rotation >= 3600 )); then
+      if [[ -s "${log_file}" ]]; then
+        log "${YELLOW}" "INFO" "1 hour elapsed since last rotation. Rotating..."
+
+        cp "${log_file}" "${log_file}.old"
+        : > "${log_file}"
+
+        # Reset the timer
+        last_rotation=$current_time
+      fi
+    fi
+
+    start_port_forwards "$host_address"
+    sleep 10
+  done
+}
+
 # Direct-execution guard: only invoke start_port_forwards when this script is executed directly,
 # not when it is sourced into another shell.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  start_port_forwards "$@"
+  # 1. Kill previous background processes
+  previous_pids=$(pgrep -f "$(basename "$0")" | grep -v "^$$" || echo "")
+
+  if [[ -n "$previous_pids" ]]; then
+    log "${YELLOW}" "WARN" "Found existing watchdog process(es): ${previous_pids}. Terminating..."
+    kill -9 $previous_pids 2>/dev/null || true
+    sleep 1
+  fi
+
+  log_file="${NGUILAND_PORT_FORWARD_LOG_FILE:-port-forward.log}"
+
+  # 2. Log Rotation: Keep only one previous version
+  if [[ -f "$log_file" && -s "$log_file" ]]; then
+    mv "$log_file" "${log_file}.old"
+    log "${YELLOW}" "INFO" "Rotated previous log file to ${log_file}.old"
+  fi
+
+  # 3. Check if a 'nohup' flag was passed
+  if [[ "${1:-}" != "--no-detach" ]]; then
+    log "${GREEN}" "INFO" "Detaching and running in background..."
+    nohup "$0" --no-detach >> "$log_file" 2>&1 &
+    exit 0
+  fi
+
+  host_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
+
+  watch_port_forwards "$host_address" "$log_file"
 fi

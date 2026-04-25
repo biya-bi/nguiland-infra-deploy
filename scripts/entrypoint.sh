@@ -63,7 +63,7 @@ main() {
   # Explicitly resume and clear the trap if we finish normally
   resume_helmreleases "${namespace}" "${addons[@]:-}"
 
-  start_port_forwards "${port_forward_address}"
+  "${script_dir}/port-forward.sh"
 
   trap - EXIT
 }
