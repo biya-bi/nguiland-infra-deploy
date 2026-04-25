@@ -17,10 +17,6 @@ set -euo pipefail
 port_forward_script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 source "${port_forward_script_dir}/logger.sh"
 
-YELLOW='\033[0;33m'
-GREEN='\033[0;32m'
-NO_COLOR='\033[0m'
-
 port_forward_mappings=(
   "9001:keycloak:infra"
   "9002:artifactory-jcr:infra"
@@ -77,7 +73,7 @@ start_port_forward_by_name() {
 
   local mapping
   mapping=$(get_port_forward_mapping "${service_name}" "${namespace}") || {
-    printf "${YELLOW}WARN: No port forward mapping found for service '%s' in namespace '%s'. Skipping...${NO_COLOR}\n" "${service_name}" "${namespace}" >&2
+    log_warn "No port forward mapping found for service '${service_name}' in namespace '${namespace}'. Skipping..." >&2
     return 1
   }
 
@@ -106,21 +102,21 @@ start_single_port_forward() {
   if lsof -Pi @"$host_address":"$host_port" -sTCP:LISTEN -t >/dev/null 2>&1; then
     # Verify if the tunnel is actually functional
     if ! nc -z -w 3 "$host_address" "$host_port" > /dev/null 2>&1; then
-        printf "${YELLOW}Zombie port-forward detected on %s:%s. Cleaning up...${NO_COLOR}\n" "${host_display}" "${host_port}"
+        log_warn "Zombie port-forward detected on ${host_display}:${host_port}. Cleaning up..."
         local pids
         pids=$(lsof -tni @"$host_address":"$host_port" -sTCP:LISTEN || true)
         [[ -n "$pids" ]] && kill -9 $pids 2>/dev/null || true
-        printf "${GREEN}Restarting port-forward on %s:%s...${NO_COLOR}\n" "${host_address}" "${host_port}"
+        log_info "Restarting port-forward on ${host_address}:${host_port}..."
     else
-      printf "${YELLOW}WARN: Port %s on %s is active and healthy. Skipping...${NO_COLOR}\n" "${host_port}" "${host_display}"
+      log_warn "Port ${host_port} on ${host_display} is active and healthy. Skipping..."
       return 0
     fi
   else
-    printf "${GREEN}INFO: Port %s on %s is free. Starting port-forward...${NO_COLOR}\n" "${host_port}" "${host_display}"
+    log_info "Port ${host_port} on ${host_display} is free. Starting port-forward..."
   fi
 
   if ! kubectl get svc "${service_name}" -n "${namespace}" >/dev/null 2>&1; then
-    printf "${YELLOW}WARN: Service '%s' not found in namespace '%s'. Skipping...${NO_COLOR}\n" "${service_name}" "${namespace}"
+    log_warn "Service '${service_name}' not found in namespace '${namespace}'. Skipping..."
     return 0
   fi
 
@@ -132,9 +128,9 @@ start_single_port_forward() {
   # Wait a moment for the background process to initialize and bind to the port
   sleep 5
   if lsof -Pi @"$host_address":"$host_port" -sTCP:LISTEN -t >/dev/null 2>&1; then
-    printf "${GREEN}INFO: Port forwarded, %s:%s -> svc/%s:%s (%s)${NO_COLOR}\n" "${host_display}" "${host_port}" "${service_name}" "${service_port}" "${namespace}"
+    log_info "Port forwarded, ${host_display}:${host_port} -> svc/${service_name}:${service_port} (${namespace})"
   else
-    printf "${YELLOW}WARN: Background process started but %s:%s is not listening. Forwarding might have failed.${NO_COLOR}\n" "${host_address}" "${host_port}"
+    log_warn "Background process started but ${host_address}:${host_port} is not listening. Forwarding might have failed."
   fi
 }
 
@@ -168,7 +164,7 @@ watch_port_forwards() {
     # 2. ROTATE every 1 hour (3600 seconds) regardless of recent writes
     if (( current_time - last_rotation >= 3600 )); then
       if [[ -s "${log_file}" ]]; then
-        log "${YELLOW}" "INFO" "1 hour elapsed since last rotation. Rotating..."
+        log_info "1 hour elapsed since last rotation. Rotating..."
 
         cp "${log_file}" "${log_file}.old"
         : > "${log_file}"
@@ -190,7 +186,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   previous_pids=$(pgrep -f "$(basename "$0")" | grep -v "^$$" || echo "")
 
   if [[ -n "$previous_pids" ]]; then
-    log "${YELLOW}" "WARN" "Found existing watchdog process(es): ${previous_pids}. Terminating..."
+    log_warn "Found existing watchdog process(es): ${previous_pids}. Terminating..."
     kill -9 $previous_pids 2>/dev/null || true
     sleep 1
   fi
@@ -200,12 +196,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   # 2. Log Rotation: Keep only one previous version
   if [[ -f "$log_file" && -s "$log_file" ]]; then
     mv "$log_file" "${log_file}.old"
-    log "${YELLOW}" "INFO" "Rotated previous log file to ${log_file}.old"
+    log_info "Rotated previous log file to ${log_file}.old"
   fi
 
   # 3. Check if a 'nohup' flag was passed
   if [[ "${1:-}" != "--no-detach" ]]; then
-    log "${GREEN}" "INFO" "Detaching and running in background..."
+    log_info "Detaching and running in background..."
     nohup "$0" --no-detach >> "$log_file" 2>&1 &
     exit 0
   fi
