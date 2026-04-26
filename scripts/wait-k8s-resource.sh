@@ -70,6 +70,7 @@ wait_for_resource() {
 
   local message
   message=$(get_wait_message "${resource_type}" "${resource_name}" "${condition}" "${namespace}")
+  trap 'printf "\033[?25h"' RETURN
   log_info "${message} " false
   printf '\033[?25l'
 
