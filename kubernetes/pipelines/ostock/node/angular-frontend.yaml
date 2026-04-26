@@ -84,5 +84,3 @@ spec:
     value: ostock
   - name: group-id
     value: ostock
-  - name: environment
-    value: int
