@@ -82,7 +82,7 @@ wait_for_resource() {
         return 0
       fi
     else
-      if kubectl wait --for="${condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=5s >/dev/null 2>&1; then
+      if kubectl wait --for="${condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=2s >/dev/null 2>&1; then
         printf "\n"
         return 0
       fi
@@ -101,7 +101,7 @@ wait_for_resource() {
     fi
 
     if [[ -n "${failure_condition}" ]]; then
-      if kubectl wait --for="${failure_condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=5s >/dev/null 2>&1; then
+      if kubectl wait --for="${failure_condition}" "${resource_type}/${resource_name}" -n "${namespace}" --timeout=2s >/dev/null 2>&1; then
         printf "\n"
         return 1
       fi
@@ -112,7 +112,7 @@ wait_for_resource() {
       return 1
     fi
 
-    sleep 5
+    sleep 1
     printf "\b\b\b"
     dots=$(( (dots + 1) % 4 ))
   done
