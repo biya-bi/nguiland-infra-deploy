@@ -31,3 +31,13 @@ log_warn() {
 log_error() {
   log "${RED}" "ERROR" "$1" "${2:-true}" >&2
 }
+
+rotate_log_file() {
+  local log_file="$1"
+  local backup_file="${2:-${log_file}.old}"
+
+  cp "${log_file}" "${backup_file}"
+  : > "${log_file}"
+
+  echo "${backup_file}"
+}

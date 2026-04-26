@@ -147,14 +147,6 @@ start_port_forwards() {
   done
 }
 
-rotate_port_forward_log() {
-  local log_file="$1"
-
-  cp "${log_file}" "${log_file}.old"
-  : > "${log_file}"
-  echo "${log_file}.old"
-}
-
 watch_port_forwards() {
   local host_address="$1"
   local log_file="$2"
@@ -174,7 +166,7 @@ watch_port_forwards() {
       if [[ -s "${log_file}" ]]; then
         log_info "1 hour elapsed since last rotation. Rotating..."
 
-        rotate_port_forward_log "${log_file}"
+        rotate_log_file "${log_file}"
 
         # Reset the timer
         last_rotation=$current_time
@@ -202,7 +194,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   # 2. Log Rotation: Keep only one previous version
   if [[ -f "$log_file" && -s "$log_file" ]]; then
-    rotated_log_file=$(rotate_port_forward_log "${log_file}")
+    rotated_log_file=$(rotate_log_file "${log_file}")
     log_info "Rotated previous log file to ${rotated_log_file}"
   fi
 
