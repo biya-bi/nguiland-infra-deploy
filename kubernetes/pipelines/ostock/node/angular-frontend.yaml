@@ -74,8 +74,10 @@ spec:
     value: "."
   - name: helm-charts-dir
     value: "."
+  - name: helm-chart-context
+    value: angular-frontend
   - name: helm-chart-repo-url
-    value: git@github.com:biya-bi/ostock-angular-frontend-chart.git
+    value: git@github.com:biya-bi/ostock-helm.git
   - name: helm-chart-repo-revision
     value: develop
   - name: helm-chart-release-namespace
