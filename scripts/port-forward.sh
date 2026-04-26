@@ -108,7 +108,7 @@ start_single_port_forward() {
         [[ -n "$pids" ]] && kill -9 $pids 2>/dev/null || true
         log_info "Restarting port-forward on ${host_address}:${host_port}..."
     else
-      log_warn "Port ${host_port} on ${host_display} is active and healthy. Skipping..."
+      log_info "Port ${host_port} on ${host_display} is active and healthy. Skipping..."
       return 0
     fi
   else
