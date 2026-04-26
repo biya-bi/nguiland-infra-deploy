@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+wait_resource_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "${wait_resource_script_dir}/logger.sh"
+
 # Convert a duration string into seconds.
 timeout_to_seconds() {
   local timeout="${1}"
@@ -67,10 +70,11 @@ wait_for_resource() {
 
   local message
   message=$(get_wait_message "${resource_type}" "${resource_name}" "${condition}" "${namespace}")
-  printf "%s" "${message}"
+  log_info "${message} " false
   printf '\033[?25l'
 
   while true; do
+    printf "%s" "${dot_states[dots]}"
     if [[ "${condition}" == "exists" ]]; then
       if kubectl get "${resource_type}" "${resource_name}" -n "${namespace}" >/dev/null 2>&1; then
         printf "\n"
@@ -88,7 +92,8 @@ wait_for_resource() {
       local status_json
       status_json=$(kubectl get "${resource_type}" "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
       if echo "${status_json}" | jq -e '.status.containerStatuses[]? | select(.state.waiting.reason == "CrashLoopBackOff" or .state.waiting.reason == "Error")' >/dev/null 2>&1; then
-        printf "\n\033[0;31mERROR: %s/%s entered a terminal failure state (CrashLoopBackOff/Error).\033[0m\n" "${resource_type}" "${resource_name}"
+        printf "\n"
+        log_error "${resource_type}/${resource_name} entered a terminal failure state (CrashLoopBackOff/Error)."
         kubectl logs -n "${namespace}" "${resource_type}/${resource_name}" --all-containers --tail=20 || true
         return 1
       fi
@@ -106,9 +111,9 @@ wait_for_resource() {
       return 1
     fi
 
-    dots=$(( (dots + 1) % 4 ))
-    printf "\r%s%s" "${message}" "${dot_states[dots]}"
     sleep 5
+    printf "\b\b\b"
+    dots=$(( (dots + 1) % 4 ))
   done
 }
 

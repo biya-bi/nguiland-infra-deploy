@@ -60,12 +60,7 @@ main() {
   run_oci_publish_pipeline "${namespace}" "${oci_publish_manifest_path}"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
-  # Explicitly resume and clear the trap if we finish normally
-  resume_helmreleases "${namespace}" "${addons[@]:-}"
-
   "${script_dir}/port-forward.sh"
-
-  trap - EXIT
 }
 
 # Direct-execution guard: only invoke main when this script is executed directly,

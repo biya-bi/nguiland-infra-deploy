@@ -4,6 +4,7 @@ set -euo pipefail
 
 helm_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+. "${helm_dir}/logger.sh"
 . "${helm_dir}/wait-k8s-resource.sh"
 
 wait_for_helmrepository_exists() {
@@ -41,6 +42,7 @@ suspend_helmreleases() {
 
   local release_name
   for release_name in "$@"; do
+    log_info "Suspending HelmRelease ${release_name} in namespace ${namespace}"
     wait_for_helmrelease_exists "${namespace}" "${release_name}" "10m"
     flux suspend hr "${release_name}" -n "${namespace}"
   done
@@ -52,6 +54,7 @@ resume_helmreleases() {
 
   local release_name
   for release_name in "$@"; do
+    log_info "Resuming HelmRelease ${release_name} in namespace ${namespace}"
     flux resume hr "${release_name}" -n "${namespace}"
   done
 }

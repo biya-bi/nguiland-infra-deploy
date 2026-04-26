@@ -5,6 +5,7 @@ set -euo pipefail
 pipelines_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pipelines_manifest_dir="${pipelines_dir}/../kubernetes/pipelines"
 
+. "${pipelines_dir}/logger.sh"
 . "${pipelines_dir}/yq.sh"
 . "${pipelines_dir}/wait-k8s-resource.sh"
 
@@ -16,14 +17,14 @@ copy_pipelinerun_manifest() {
   local relative_path="${1}"
 
   if [[ -z "${relative_path}" ]]; then
-    echo "Relative PipelineRun manifest path must be provided" >&2
+    log_error "Relative PipelineRun manifest path must be provided"
     return 1
   fi
 
   local manifest_path="${pipelines_manifest_dir}/${relative_path}"
 
   if [[ ! -f "${manifest_path}" ]]; then
-    echo "PipelineRun manifest not found: ${manifest_path}" >&2
+    log_error "PipelineRun manifest not found: ${manifest_path}"
     return 1
   fi
 
@@ -39,7 +40,7 @@ set_docker_build_pipeline_params() {
   local manifest_path="${2}"
 
   if [[ -z "${namespace}" || -z "${manifest_path}" ]]; then
-    echo "Namespace and PipelineRun manifest path must be provided" >&2
+    log_error "Namespace and PipelineRun manifest path must be provided"
     return 1
   fi
 
@@ -47,13 +48,13 @@ set_docker_build_pipeline_params() {
   image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.image-push-endpoint}' 2>/dev/null || true)
 
   if [[ -z "${image_push_endpoint}" ]]; then
-    echo "Failed to retrieve image-push-endpoint from env-settings ConfigMap in namespace ${namespace}" >&2
+    log_error "Failed to retrieve image-push-endpoint from env-settings ConfigMap in namespace ${namespace}"
     return 1
   fi
 
-  printf "Setting image-push-endpoint to %s in manifest %s\n" "${image_push_endpoint}" "${manifest_path}"
+  log_info "Setting image-push-endpoint to ${image_push_endpoint} in manifest ${manifest_path}"
   yq_i "(.spec.params[] | select(.name == \"image-push-endpoint\")).value = \"${image_push_endpoint}\"" "${manifest_path}"
-  printf "Setting always-build to true in manifest %s\n" "${manifest_path}"
+  log_info "Setting always-build to true in manifest ${manifest_path}"
   yq_i "(.spec.params[] | select(.name == \"always-build\")).value = \"true\"" "${manifest_path}"
 }
 
@@ -62,7 +63,7 @@ set_oci_publish_pipeline_params() {
   local manifest_path="${2}"
 
   if [[ -z "${namespace}" || -z "${manifest_path}" ]]; then
-    echo "Namespace and PipelineRun manifest path must be provided" >&2
+    log_error "Namespace and PipelineRun manifest path must be provided"
     return 1
   fi
 
@@ -76,13 +77,13 @@ set_oci_publish_pipeline_params() {
   local lower_insecure_status
   lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
 
-  printf "Retrieved URL from HelmRepository artifactory-oci: %s\n" "${helm_registry_url:-<missing>}"
+  log_info "Retrieved URL from HelmRepository artifactory-oci: ${helm_registry_url:-<missing>}"
 
   if [[ "${lower_insecure_status}" == "true" ]]; then
     skip_tls="true"
   fi
 
-  printf "Setting skipTls to %s based on artifactory-oci HelmRepository insecure status: %s in manifest %s\n" "${skip_tls}" "${insecure_status:-<missing>}" "${manifest_path}"
+  log_info "Setting skipTls to ${skip_tls} based on artifactory-oci HelmRepository insecure status: ${insecure_status:-<missing>} in manifest ${manifest_path}"
   yq_i "(.spec.params[] | select(.name == \"skipTls\")).value = \"${skip_tls}\"" "${manifest_path}"
 
   if [[ -n "${helm_registry_url}" ]]; then
@@ -94,7 +95,7 @@ set_oci_publish_pipeline_params() {
     fi
 
     helm_registry_url="${normalized_registry_url}"
-    printf "Setting helm-registry to %s based on artifactory-oci HelmRepository URL: %s in manifest %s\n" "${helm_registry_url}" "${helm_registry_url}" "${manifest_path}"
+    log_info "Setting helm-registry to ${helm_registry_url} based on artifactory-oci HelmRepository URL in manifest ${manifest_path}"
     yq_i "(.spec.params[] | select(.name == \"helm-registry\")).value = \"${helm_registry_url}\"" "${manifest_path}"
   fi
 }
@@ -105,11 +106,11 @@ wait_for_pipelinerun_completion() {
   local timeout="${3:-1h}"
 
   if wait_for_resource "${namespace}" "pipelinerun" "${pipelinerun_name}" "condition=Succeeded" "condition=Succeeded=False" "${timeout}"; then
-    echo "PipelineRun ${pipelinerun_name} succeeded"
+    log_info "PipelineRun ${pipelinerun_name} succeeded"
     return 0
   fi
 
-  printf '\033[31mPipelineRun %s failed or timed out\033[0m\n' "${pipelinerun_name}" >&2
+  log_error "PipelineRun ${pipelinerun_name} failed or timed out"
   kubectl describe pipelinerun "${pipelinerun_name}" -n "${namespace}" || true
   return 1
 }
@@ -128,11 +129,11 @@ run_pipeline() {
     "${param_setter_func}" "${namespace}" "${manifest_path}"
   fi
 
-  echo "Applying PipelineRun manifest: ${manifest_path}"
+  log_info "Applying PipelineRun manifest: ${manifest_path}"
 
   local pipelinerun_name
   pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')
-  echo "Triggered PipelineRun ${pipelinerun_name}"
+  log_info "Triggered PipelineRun ${pipelinerun_name}"
 
   wait_for_pipelinerun_completion "${namespace}" "${pipelinerun_name}" "1h"
 }
@@ -154,7 +155,7 @@ get_pipeline_name() {
   local manifest_path="${pipelines_manifest_dir}/${relative_path}"
 
   if [[ ! -f "${manifest_path}" ]]; then
-    echo "Pipeline manifest not found: ${manifest_path}" >&2
+    log_error "Pipeline manifest not found: ${manifest_path}"
     return 1
   fi
 
