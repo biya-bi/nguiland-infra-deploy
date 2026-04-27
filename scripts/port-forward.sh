@@ -100,9 +100,10 @@ start_single_port_forward() {
   fi
 
   if lsof -Pi @"$host_address":"$host_port" -sTCP:LISTEN -t >/dev/null 2>&1; then
-    # Verify if the tunnel is actually functional
-    if ! nc -z -w 3 "$host_address" "$host_port" > /dev/null 2>&1; then
-        log_warn "Zombie port-forward detected on ${host_display}:${host_port}. Cleaning up..."
+    # Check if the HTTP service is actually responding
+    # We use -L to follow redirects and --max-time to keep it snappy
+    if ! curl -sL --max-time 3 "http://${host_address}:${host_port}" > /dev/null; then
+        log_warn "Port ${host_port} is listening on ${host_display} but service is unresponsive (Tunnel Timeout). Cleaning up..."
         local pids
         pids=$(lsof -tni @"$host_address":"$host_port" -sTCP:LISTEN || true)
         [[ -n "$pids" ]] && kill -9 $pids 2>/dev/null || true
