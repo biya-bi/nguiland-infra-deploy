@@ -40,8 +40,14 @@ suspend_helmreleases() {
   local namespace="${1}"
   shift
 
+  # If no arguments are left, exit early
+  [[ $# -eq 0 ]] && return 0
+
   local release_name
   for release_name in "$@"; do
+    # Guard against empty strings/whitespace passed as arguments
+    [[ -z "${release_name// /}" ]] && continue
+
     log_info "Suspending HelmRelease ${release_name} in namespace ${namespace}"
     wait_for_helmrelease_exists "${namespace}" "${release_name}" "10m"
     flux suspend hr "${release_name}" -n "${namespace}"
@@ -52,8 +58,14 @@ resume_helmreleases() {
   local namespace="${1}"
   shift
 
+  # If no arguments are left, exit early
+  [[ $# -eq 0 ]] && return 0
+
   local release_name
   for release_name in "$@"; do
+    # Guard against empty strings/whitespace passed as arguments
+    [[ -z "${release_name// /}" ]] && continue
+
     log_info "Resuming HelmRelease ${release_name} in namespace ${namespace}"
     flux resume hr "${release_name}" -n "${namespace}"
   done

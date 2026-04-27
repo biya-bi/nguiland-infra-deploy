@@ -30,10 +30,12 @@ main() {
     addons+=("$line")
   done < <(get_dependent_helmreleases "${namespace}" "${jcr_service_name}" "${oss_service_name}")
 
-  suspend_helmreleases "${namespace}" "${addons[@]:-}"
-
-  # Ensure we resume even if the middle steps fail
-  trap "resume_helmreleases ${namespace} ${addons[*]:-} || true; cleanup_terminal" EXIT
+  if [[ ${#addons[@]} -gt 0 ]]; then
+    suspend_helmreleases "${namespace}" "${addons[@]}"
+    trap "resume_helmreleases ${namespace} ${addons[*]:-} || true; cleanup_terminal" EXIT
+  else
+    trap 'cleanup_terminal' EXIT
+  fi
 
   wait_for_deployment_available "${namespace}" "${jcr_service_name}" "15m"
 
