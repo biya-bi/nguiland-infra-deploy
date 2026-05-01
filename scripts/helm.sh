@@ -2,10 +2,10 @@
 
 set -euo pipefail
 
-helm_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-. "${helm_dir}/logger.sh"
-. "${helm_dir}/wait-k8s-resource.sh"
+. "${scripts_dir}/logger.sh"
+. "${scripts_dir}/wait-k8s-resource.sh"
 
 wait_for_helmrepository_exists() {
   wait_for_resource "${1}" "helmrepository" "${2}" "exists" "${3:-10m}"

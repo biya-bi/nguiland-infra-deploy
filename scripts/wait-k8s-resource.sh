@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-wait_resource_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-. "${wait_resource_script_dir}/logger.sh"
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "${scripts_dir}/logger.sh"
 
 # Convert a duration string into seconds.
 timeout_to_seconds() {

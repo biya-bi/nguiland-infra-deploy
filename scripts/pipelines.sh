@@ -2,12 +2,12 @@
 
 set -euo pipefail
 
-pipelines_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-pipelines_manifest_dir="${pipelines_dir}/../kubernetes/pipelines"
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+pipelines_manifest_dir="${scripts_dir}/../kubernetes/pipelines"
 
-. "${pipelines_dir}/logger.sh"
-. "${pipelines_dir}/yq.sh"
-. "${pipelines_dir}/wait-k8s-resource.sh"
+. "${scripts_dir}/logger.sh"
+. "${scripts_dir}/yq.sh"
+. "${scripts_dir}/wait-k8s-resource.sh"
 
 wait_for_pipeline_exists() {
   wait_for_resource "${1}" "pipeline" "${2}" "exists" "${3:-10m}"

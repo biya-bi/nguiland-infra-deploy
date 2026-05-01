@@ -2,14 +2,14 @@
 
 set -euo pipefail
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-. "${script_dir}/yq.sh"
-. "${script_dir}/helm.sh"
-. "${script_dir}/wait-k8s-resource.sh"
-. "${script_dir}/pipelines.sh"
-. "${script_dir}/port-forward.sh"
-. "${script_dir}/logger.sh"
+. "${scripts_dir}/yq.sh"
+. "${scripts_dir}/helm.sh"
+. "${scripts_dir}/wait-k8s-resource.sh"
+. "${scripts_dir}/pipelines.sh"
+. "${scripts_dir}/port-forward.sh"
+. "${scripts_dir}/logger.sh"
 
 cleanup_terminal() {
   printf '\033[?25h'
@@ -67,7 +67,7 @@ deploy() {
   run_oci_publish_pipeline "${namespace}" "${oci_publish_manifest_path}"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
-  "${script_dir}/port-forward.sh"
+  "${scripts_dir}/port-forward.sh"
 }
 
 # Direct-execution guard: only invoke deploy when this script is executed directly,

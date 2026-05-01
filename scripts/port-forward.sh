@@ -14,8 +14,8 @@
 
 set -euo pipefail
 
-port_forward_script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-source "${port_forward_script_dir}/logger.sh"
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "${scripts_dir}/logger.sh"
 
 port_forward_mappings=(
   "9001:keycloak:infra"

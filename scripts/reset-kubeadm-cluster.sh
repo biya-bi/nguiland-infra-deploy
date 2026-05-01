@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-reset_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-. "${reset_script_dir}/logger.sh"
+scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "${scripts_dir}/logger.sh"
 
 SSH_PORT=22
 POD_CIDR="10.244.0.0/16"
