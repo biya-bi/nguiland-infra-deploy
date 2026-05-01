@@ -16,7 +16,7 @@ cleanup_terminal() {
 trap cleanup_terminal EXIT
 trap 'exit 130' INT
 
-main() {
+deploy() {
   local namespace="infra"
 
   local port_forward_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
@@ -65,8 +65,8 @@ main() {
   "${script_dir}/port-forward.sh"
 }
 
-# Direct-execution guard: only invoke main when this script is executed directly,
+# Direct-execution guard: only invoke deploy when this script is executed directly,
 # not when it is sourced into another shell.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  main "$@"
+  deploy "$@"
 fi

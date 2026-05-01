@@ -90,8 +90,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   create_sops_age_secret "${sops_age_namespace}" "${sops_age_key_file}"
   bootstrap_flux "${namespace}" "${owner}" "${repository}" "${branch}" "${cluster}"
 
-  # Invoke entrypoint.sh after bootstrap_flux completes.
-  # The entrypoint.sh script is expected to live alongside this start script.
-  flux_scripts_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-  "${flux_scripts_dir}/entrypoint.sh"
+  # Invoke deploy.sh after bootstrap_flux completes.
+  # The deploy.sh script is expected to live alongside this start script.
+  scripts_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+  "${scripts_dir}/deploy.sh"
 fi
