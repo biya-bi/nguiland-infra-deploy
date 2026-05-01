@@ -18,13 +18,21 @@ trap cleanup_terminal EXIT
 trap 'exit 130' INT
 
 deploy() {
-  local namespace="${1:-}"
+  local environment="${1:-}"
+  local namespace="${2:-}"
+  if [ -z "$environment" ]; then
+    log_error "environment is required"
+    exit 1
+  fi
   if [ -z "$namespace" ]; then
     log_error "namespace is required"
     exit 1
   fi
 
-  local port_forward_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
+  local port_forward_enabled=false
+  if enable_port_forward "$environment"; then
+    port_forward_enabled=true
+  fi
 
   local jcr_service_name="artifactory-jcr"
   local oss_service_name="artifactory-oss"
@@ -61,13 +69,18 @@ deploy() {
   # Before running the docker-publish pipeline, we need to start a port-forward
   # for artifactory-jcr so that the pipeline does not fail. This is particularly
   # important on environments (such as int) with Wireguard
-  start_port_forward_by_name "${port_forward_address}" "${jcr_service_name}" "${namespace}"
+  if [[ "$port_forward_enabled" == "true" ]]; then
+    local port_forward_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
+    start_port_forward_by_name "${port_forward_address}" "${jcr_service_name}" "${namespace}"
+  fi
 
   run_docker_build_pipeline "${namespace}" "${docker_build_manifest_path}"
   run_oci_publish_pipeline "${namespace}" "${oci_publish_manifest_path}"
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
-  "${scripts_dir}/port-forward.sh"
+  if [[ "$port_forward_enabled" == "true" ]]; then
+    "${scripts_dir}/port-forward.sh"
+  fi
 }
 
 # Direct-execution guard: only invoke deploy when this script is executed directly,

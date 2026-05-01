@@ -5,6 +5,7 @@ set -euo pipefail
 RED='\033[0;31m'
 YELLOW='\033[0;33m'
 GREEN='\033[0;32m'
+CYAN='\033[0;36m'
 NO_COLOR='\033[0m'
 
 log() {
@@ -18,6 +19,10 @@ log() {
   local nl=""
   [[ "${add_newline}" == "true" ]] && nl="\n"
   printf "${timestamp} ${level_color}${level_name}${NO_COLOR} ${message}${nl}"
+}
+
+log_debug() {
+  log "${CYAN}" "DEBUG" "$1" "${2:-true}" >&2
 }
 
 log_info() {

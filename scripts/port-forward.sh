@@ -3,6 +3,10 @@
 # -----------------------------------------------------------------------------
 # Environment Variables (Optional Overrides)
 # -----------------------------------------------------------------------------
+# NGUILAND_ENABLE_PORT_FORWARD   : Explicitly enable or disable port-forwarding.
+#                                  If unset, defaults based on the environment (enabled for local/int).
+#                                  Values: 'true', 'false'.
+#                                  Example: export NGUILAND_ENABLE_PORT_FORWARD="true"
 # NGUILAND_PORT_FORWARD_ADDRESS  : The IP or hostname to bind the tunnels to.
 #                                  Defaults to 'localhost'.
 #                                  Example: export NGUILAND_PORT_FORWARD_ADDRESS="10.0.0.2"
@@ -22,6 +26,44 @@ port_forward_mappings=(
   "9002:artifactory-jcr:infra"
   "9003:artifactory-oss:infra"
 )
+
+enable_port_forward() {
+  local environment="$1"
+
+  local port_forward_enabled
+  port_forward_enabled=$(echo "${NGUILAND_ENABLE_PORT_FORWARD:-}" | tr '[:upper:]' '[:lower:]' | xargs)
+
+  if [[ "$port_forward_enabled" =~ ^true$ ]]; then
+    # Port forwarding explicitly enabled
+    return 0
+  fi
+
+  if [[ "$port_forward_enabled" =~ ^false$ ]]; then
+    # Port forwarding explicitly disabled.
+    return 1
+  fi
+
+  if [[ -n "$port_forward_enabled" ]]; then
+    log_warn "The '$NGUILAND_ENABLE_PORT_FORWARD' value specified for NGUILAND_ENABLE_PORT_FORWARD is not valid."
+    log_warn "Consider setting NGUILAND_ENABLE_PORT_FORWARD to 'true' or 'false' for explicit control."
+    return 1
+  fi
+
+  # From here on, port_forward_enabled is blank (not set or empty).
+
+  local env
+  env=$(echo "${environment}" | tr '[:upper:]' '[:lower:]')
+
+  if [[ "$env" =~ ^(local|int)$ ]]; then
+    # Port forwarding enabled due to environment.
+    log_warn "NGUILAND_ENABLE_PORT_FORWARD is not explicitly set. Port forwarding is enabled for environment '$environment'."
+    return 0
+  else
+    log_debug "NGUILAND_ENABLE_PORT_FORWARD is not explicitly set. Port forwarding is disabled for environment '$environment'."
+    log_debug "Consider setting NGUILAND_ENABLE_PORT_FORWARD to 'true' or 'false' for explicit control."
+    return 1
+  fi
+}
 
 get_port_forward_mapping() {
   local target_service_name="$1"
