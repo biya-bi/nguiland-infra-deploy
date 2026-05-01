@@ -9,6 +9,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "${script_dir}/wait-k8s-resource.sh"
 . "${script_dir}/pipelines.sh"
 . "${script_dir}/port-forward.sh"
+. "${script_dir}/logger.sh"
 
 cleanup_terminal() {
   printf '\033[?25h'
@@ -17,7 +18,11 @@ trap cleanup_terminal EXIT
 trap 'exit 130' INT
 
 deploy() {
-  local namespace="infra"
+  local namespace="${1:-}"
+  if [ -z "$namespace" ]; then
+    log_error "namespace is required"
+    exit 1
+  fi
 
   local port_forward_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
 

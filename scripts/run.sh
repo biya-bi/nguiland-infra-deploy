@@ -80,18 +80,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   cluster="${1}"
   branch="${2}"
 
-  namespace="flux-system"
-  sops_age_namespace="infra"
+  flux_namespace="flux-system"
+  target_namespace="infra"
+  sops_age_namespace="${target_namespace}"
   owner="biya-bi"
   repository="nguiland-ops-flux"
 
   sops_age_key_file=$(echo "${SOPS_AGE_KEY_FILE:-}" | xargs)
 
   create_sops_age_secret "${sops_age_namespace}" "${sops_age_key_file}"
-  bootstrap_flux "${namespace}" "${owner}" "${repository}" "${branch}" "${cluster}"
+  bootstrap_flux "${flux_namespace}" "${owner}" "${repository}" "${branch}" "${cluster}"
 
   # Invoke deploy.sh after bootstrap_flux completes.
   # The deploy.sh script is expected to live alongside this start script.
   scripts_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-  "${scripts_dir}/deploy.sh"
+  "${scripts_dir}/deploy.sh" "${target_namespace}"
 fi
