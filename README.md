@@ -13,6 +13,7 @@
 7. [Removing unused Docker resources](#removing-unused-docker-resources)
 8. [Logging in to GitHub Container Registry](#logging-in-to-github-container-registry)
 9. [Installing the Let's Encrypt certificate](#installing-the-lets-encrypt-certificate)
+10. [Scripts](#scripts)
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -134,3 +135,31 @@ Since Let's Encrypt certificates expire after three months, it is better to have
 will ensure that services are not interrupted due to expired certificates. The `certificates/namecheap/auto_renew.sh` script is a working
 example of a script that can be ran once to enable Let's Encrypt certificates for a domain hosted by **namecheap.com**. That script assumes
 a **namecheap** user account on which API access is enabled. Click [here](https://github.com/acmesh-official/acme.sh) to get more information about the script:
+
+## Scripts
+The `scripts/` directory contains utility scripts to automate deployment and maintenance tasks.
+
+### deploy.sh
+The main orchestrator for deployments. It handles Helm release suspensions, infrastructure updates, and triggers OCI pipelines.
+- **Usage**: `./scripts/deploy.sh <environment> <namespace>`
+
+### port-forward.sh
+Manages background port-forwarding for core services like Keycloak and Artifactory. Includes a watchdog mechanism to ensure connectivity is maintained.
+- **Key Variables**:
+    - `NGUILAND_ENABLE_PORT_FORWARD`: Set to `true` or `false` to explicitly control behavior.
+    - `NGUILAND_PORT_FORWARD_ADDRESS`: The bind address (defaults to `localhost`).
+
+### teardown.sh
+A safe, interactive script to completely remove the Flux system, associated CRDs, and namespaces from a cluster.
+- **Safety**: Requires explicit `[y/N]` confirmation before proceeding.
+
+### run.sh
+The entry point for deployments, often used to kick off the process for specific branches.
+
+### logger.sh
+A centralized logging utility providing standardized, color-coded output (`DEBUG`, `INFO`, `WARN`, `ERROR`) for all scripts in the repository.
+
+### Utility Scripts
+- `helm.sh`: Manages HelmRelease suspension and resumption logic.
+- `pipelines.sh`: Handles interactions with Tekton pipelines.
+- `wait-k8s-resource.sh`: Helper functions for monitoring Kubernetes resource readiness.
