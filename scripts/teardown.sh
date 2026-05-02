@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+echo "WARNING: This script will perform a destructive teardown of the Flux system and associated infrastructure."
+read -p "Are you sure you want to proceed? [y/N] " response
+if [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+  echo "Teardown aborted."
+  exit 0
+fi
+
 echo "--- 1. STOPPING THE FLUX GITOPS SYSTEM ---"
 flux uninstall --namespace flux-system --silent 2>/dev/null
 flux uninstall --namespace infra --silent 2>/dev/null
