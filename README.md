@@ -1,19 +1,39 @@
 # Table of Contents
-1. [On-premises deployment](#on-premises-deployment)
+1. [Secret Encryption Setup](#secret-encryption-setup)
+2. [Bootstrap Flux](#bootstrap-flux)
+3. [On-premises deployment](#on-premises-deployment)
 	  - [Setting up Wireguard on both on the cloud virtual machine and on the on-premises machine](#wireguard-vpn).
 	  - [Setting up Nginx on the cloud virtual machine](#nginx-on-the-cloud-virtual-machine).
 	  - [Adding host entries on the on-premises machine](#on-premises-host-entries).
 	  - [Setting up a kubernetes cluster on the on-premises machine](#kubernetes-on-premises).
-2. [Artifactory](#artifactory)
+4. [Artifactory](#artifactory)
 	  - [Generating join and master keys](#generating-join-and-master-keys)
-3. [Pipelines](#pipelines)
-4. [Kubernetes Dashboard](#kubernetes-dashboard)
-5. [FluxCD UI](#fluxcd-ui)
-6. [Deleting pipeline runs](#deleting-pipeline-runs)
-7. [Removing unused Docker resources](#removing-unused-docker-resources)
-8. [Logging in to GitHub Container Registry](#logging-in-to-github-container-registry)
-9. [Installing the Let's Encrypt certificate](#installing-the-lets-encrypt-certificate)
-10. [Scripts](#scripts)
+5. [Pipelines](#pipelines)
+6. [Kubernetes Dashboard](#kubernetes-dashboard)
+7. [FluxCD UI](#fluxcd-ui)
+8. [Deleting pipeline runs](#deleting-pipeline-runs)
+9. [Removing unused Docker resources](#removing-unused-docker-resources)
+10. [Tekton](#tekton)
+11. [Logging in to GitHub Container Registry](#logging-in-to-github-container-registry)
+12. [Installing the Let's Encrypt certificate](#installing-the-lets-encrypt-certificate)
+13. [Scripts](#scripts)
+
+## Secret Encryption Setup
+Before bootstrapping or running `run.sh`, you need to prepare your encryption keys and environment.
+
+```bash
+# Set the environment to avoid key collisions if multiple clusters (local, int, prod) are managed.
+ENVIRONMENT=local
+SOPS_AGE_DIR="${HOME}/.nguiland/${ENVIRONMENT}/sops/age"
+mkdir -p "${SOPS_AGE_DIR}"
+KEYS_FILE="${SOPS_AGE_DIR}/keys.txt"
+age-keygen -o "$KEYS_FILE" # Generate an age key pair
+chmod 600 "$KEYS_FILE"     # Restrict permissions to the current user
+# Set the environment variable for the current session.
+# To make this persistent, add the line below to your ~/.bashrc or ~/.zshrc
+export SOPS_AGE_KEY_FILE="${KEYS_FILE}"
+```
+
 ## On-premises deployment
 Deploying on-premises requires setting up a Wireguard VPN, setting up a reverse proxy, adding host entries, and setting up a Kubernetes cluster as describe in each of the below subsections.
 ### Wireguard VPN
@@ -154,7 +174,7 @@ A safe, interactive script to completely remove the Flux system, associated CRDs
 - **Safety**: Requires explicit `[y/N]` confirmation before proceeding.
 
 ### run.sh
-The entry point for deployments, often used to kick off the process for specific branches.
+The main entry point for cluster initialization and deployment. It automates SOPS secret creation, bootstraps the Flux system, and invokes `deploy.sh` to orchestrate the infrastructure.
 
 ### logger.sh
 A centralized logging utility providing standardized, color-coded output (`DEBUG`, `INFO`, `WARN`, `ERROR`) for all scripts in the repository.
