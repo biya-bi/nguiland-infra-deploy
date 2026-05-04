@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+# -----------------------------------------------------------------------------
+# Environment Variables (Optional Overrides)
+# -----------------------------------------------------------------------------
+# NGUILAND_PORT_FORWARD_ADDRESS  : The IP or hostname to bind the tunnels to.
+#                                  Defaults to 'localhost'.
+#                                  Example: export NGUILAND_PORT_FORWARD_ADDRESS="10.0.0.2"
+# -----------------------------------------------------------------------------
+
 set -euo pipefail
 
 scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
