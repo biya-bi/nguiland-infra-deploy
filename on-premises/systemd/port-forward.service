@@ -1,0 +1,21 @@
+# This file is a template. Use ../../scripts/install.sh to install it.
+[Unit]
+Description=Nguiland Port Forwarding Watchdog
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=${USER}
+WorkingDirectory=${NGUILAND_OPS_DEPLOY_DIR}
+
+# We pass --no-detach so systemd can track the process correctly.
+# If you have specific overrides, add them as Environment= variables below.
+Environment=NGUILAND_PORT_FORWARD_ADDRESS=${NGUILAND_PORT_FORWARD_ADDRESS}
+ExecStart=${NGUILAND_OPS_DEPLOY_DIR}/scripts/port-forward.sh --no-detach
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

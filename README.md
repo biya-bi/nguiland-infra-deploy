@@ -169,6 +169,14 @@ Manages background port-forwarding for core services like Keycloak and Artifacto
     - `NGUILAND_ENABLE_PORT_FORWARD`: Set to `true` or `false` to explicitly control behavior.
     - `NGUILAND_PORT_FORWARD_ADDRESS`: The bind address (defaults to `localhost`).
 
+#### Persistence (Linux Systemd)
+To ensure the port-forwarding watchdog restarts automatically after a system reboot, install the provided systemd service:
+
+Run the installation script:
+```bash
+./scripts/install.sh
+```
+
 ### teardown.sh
 A safe, interactive script to completely remove the Flux system, associated CRDs, and namespaces from a cluster.
 - **Safety**: Requires explicit `[y/N]` confirmation before proceeding.
