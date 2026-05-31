@@ -9,15 +9,17 @@ spec:
     - name: namespace
       value: infra
     - name: repository
-      value: helm-addons
+      value: helm
     - name: helm-charts-dir
-      value: addons
+      value: .
     - name: helm-registry
       value: oci://artifactory-jcr.infra/docker-local
     - name: artifactory-readiness-timeout
       value: 15m
     - name: skipTls
       value: "false"
+    - name: excluded-charts
+      value: "artifactory-jcr chart-repository"
   pipelineRef:
     name: helm-chart-oci-publish
   taskRunTemplate:
