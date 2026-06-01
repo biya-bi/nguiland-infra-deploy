@@ -71,32 +71,32 @@ set_oci_publish_pipeline_params() {
   helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
   local insecure_status
   insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
-  local helm_registry_url
-  helm_registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
+  local registry_url
+  registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
   local skip_tls="false"
   local lower_insecure_status
   lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
 
-  log_info "Retrieved URL from HelmRepository artifactory-oci: ${helm_registry_url:-<missing>}"
+  log_info "Retrieved URL from HelmRepository artifactory-oci: ${registry_url:-<missing>}"
 
   if [[ "${lower_insecure_status}" == "true" ]]; then
     skip_tls="true"
   fi
 
-  log_info "Setting skipTls to ${skip_tls} based on artifactory-oci HelmRepository insecure status: ${insecure_status:-<missing>} in manifest ${manifest_path}"
-  yq_i "(.spec.params[] | select(.name == \"skipTls\")).value = \"${skip_tls}\"" "${manifest_path}"
+  log_info "Setting skip-tls to ${skip_tls} based on artifactory-oci HelmRepository insecure status: ${insecure_status:-<missing>} in manifest ${manifest_path}"
+  yq_i "(.spec.params[] | select(.name == \"skip-tls\")).value = \"${skip_tls}\"" "${manifest_path}"
 
-  if [[ -n "${helm_registry_url}" ]]; then
+  if [[ -n "${registry_url}" ]]; then
     local registry_suffix="org.nguiland.infra"
-    local normalized_registry_url="${helm_registry_url%/}"
+    local normalized_registry_url="${registry_url%/}"
 
     if [[ "${normalized_registry_url}" != "${registry_suffix}" && "${normalized_registry_url}" != */${registry_suffix} ]]; then
       normalized_registry_url="${normalized_registry_url}/${registry_suffix}"
     fi
 
-    helm_registry_url="${normalized_registry_url}"
-    log_info "Setting helm-registry to ${helm_registry_url} based on artifactory-oci HelmRepository URL in manifest ${manifest_path}"
-    yq_i "(.spec.params[] | select(.name == \"helm-registry\")).value = \"${helm_registry_url}\"" "${manifest_path}"
+    registry_url="${normalized_registry_url}"
+    log_info "Setting registry to ${registry_url} based on artifactory-oci HelmRepository URL in manifest ${manifest_path}"
+    yq_i "(.spec.params[] | select(.name == \"registry\")).value = \"${registry_url}\"" "${manifest_path}"
   fi
 }
 

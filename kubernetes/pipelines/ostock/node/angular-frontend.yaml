@@ -72,9 +72,9 @@ spec:
     value: develop
   - name: node-context-dir
     value: "."
-  - name: helm-charts-dir
+  - name: charts-dir
     value: "."
-  - name: helm-chart-context
+  - name: chart-context
     value: angular-frontend
   - name: helm-chart-repo-url
     value: git@github.com:biya-bi/ostock-helm.git

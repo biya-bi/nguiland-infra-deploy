@@ -63,9 +63,9 @@ spec:
     value: develop
   - name: maven-context-dir
     value: "."
-  - name: helm-charts-dir
+  - name: charts-dir
     value: "."
-  - name: helm-chart-context
+  - name: chart-context
     value: license-service
   - name: helm-chart-repo-url
     value: git@github.com:biya-bi/ostock-helm.git

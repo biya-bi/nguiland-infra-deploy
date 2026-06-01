@@ -10,13 +10,13 @@ spec:
       value: infra
     - name: repository
       value: helm
-    - name: helm-charts-dir
+    - name: charts-dir
       value: .
-    - name: helm-registry
+    - name: registry
       value: oci://artifactory-jcr.infra/docker-local
     - name: artifactory-readiness-timeout
       value: 15m
-    - name: skipTls
+    - name: skip-tls
       value: "false"
     - name: excluded-charts
       value: "artifactory-jcr chart-repository"
