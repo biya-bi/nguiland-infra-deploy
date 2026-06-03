@@ -13,8 +13,6 @@ set -euo pipefail
 scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 . "${scripts_dir}/yq.sh"
-. "${scripts_dir}/helm.sh"
-. "${scripts_dir}/wait-k8s-resource.sh"
 . "${scripts_dir}/pipelines.sh"
 . "${scripts_dir}/port-forward.sh"
 . "${scripts_dir}/flux.sh"
