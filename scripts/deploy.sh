@@ -43,8 +43,8 @@ deploy() {
     port_forward_enabled=true
   fi
 
-  local jcr_service_name="artifactory-jcr"
-  local oss_service_name="artifactory-oss"
+  local jcr_release_name="artifactory-jcr"
+  local oss_release_name="artifactory-oss"
   local chart_git_repo_name="helm"
   local chart_repo_release_name="chart-repository"
 
@@ -57,7 +57,7 @@ deploy() {
   local line
   while IFS= read -r line || [[ -n "$line" ]]; do
     addons+=("$line")
-  done < <(get_dependent_helmreleases "${namespace}" "${jcr_service_name}" "${oss_service_name}")
+  done < <(get_dependent_helmreleases "${namespace}" "${jcr_release_name}" "${oss_release_name}")
 
   if [[ ${#addons[@]} -gt 0 ]]; then
     suspend_helmreleases "${namespace}" "${addons[@]}"
@@ -71,7 +71,7 @@ deploy() {
   ensure_helm_release_ready "${namespace}" "${chart_repo_release_name}" "10m" "true"
 
   # Ensure the registry is functionally ready to receive image and OCI pushes.
-  ensure_helm_release_ready "${namespace}" "${jcr_service_name}" "15m" "true"
+  ensure_helm_release_ready "${namespace}" "${jcr_release_name}" "15m" "true"
 
   local docker_build_manifest_path="infra/docker/build.yaml"
   local oci_publish_manifest_path="infra/oci/publish.yaml"
@@ -92,7 +92,7 @@ deploy() {
   # important on environments (such as int) with Wireguard
   if [[ "$port_forward_enabled" == "true" ]]; then
     local port_forward_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
-    start_port_forward_by_name "${port_forward_address}" "${jcr_service_name}" "${namespace}"
+    start_port_forward_by_name "${port_forward_address}" "${jcr_release_name}" "${namespace}"
   fi
 
   run_docker_build_pipeline "${namespace}" "${docker_build_manifest_path}"
