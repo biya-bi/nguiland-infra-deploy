@@ -17,6 +17,7 @@ scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "${scripts_dir}/wait-k8s-resource.sh"
 . "${scripts_dir}/pipelines.sh"
 . "${scripts_dir}/port-forward.sh"
+. "${scripts_dir}/flux.sh"
 . "${scripts_dir}/logger.sh"
 
 cleanup_terminal() {
@@ -44,6 +45,13 @@ deploy() {
 
   local jcr_service_name="artifactory-jcr"
   local oss_service_name="artifactory-oss"
+  local chart_git_repo_name="helm"
+  local chart_repo_release_name="chart-repository"
+
+  # Wait for the primary chart Git repository to be ready. This prevents 
+  # race conditions where HelmReleases are reconciled before Flux has 
+  # materialized the internal HelmChart proxy objects.
+  ensure_git_repository_ready "${namespace}" "${chart_git_repo_name}" "10m"
 
   local addons=()
   local line
@@ -58,7 +66,12 @@ deploy() {
     trap 'cleanup_terminal' EXIT
   fi
 
-  wait_for_deployment_available "${namespace}" "${jcr_service_name}" "15m"
+  # Ensure the internal chart repository is ready before the JCR registry (artifactory-jcr).
+  # This is the primary source for the postgres and artifactory-jcr charts.
+  ensure_helm_release_ready "${namespace}" "${chart_repo_release_name}" "10m" "true"
+
+  # Ensure the registry is functionally ready to receive image and OCI pushes.
+  ensure_helm_release_ready "${namespace}" "${jcr_service_name}" "15m" "true"
 
   local docker_build_manifest_path="infra/docker/build.yaml"
   local oci_publish_manifest_path="infra/oci/publish.yaml"

@@ -7,6 +7,14 @@ scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "${scripts_dir}/logger.sh"
 . "${scripts_dir}/wait-k8s-resource.sh"
 
+wait_for_gitrepository_exists() {
+  wait_for_resource "${1}" "gitrepository" "${2}" "exists" "${3:-10m}"
+}
+
+wait_for_gitrepository() {
+  wait_for_resource "${1}" "gitrepository" "${2}" "condition=Ready" "${3:-5m}"
+}
+
 wait_for_helmrepository_exists() {
   wait_for_resource "${1}" "helmrepository" "${2}" "exists" "${3:-10m}"
 }
