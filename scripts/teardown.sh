@@ -41,11 +41,13 @@ teardown() {
   # Delete CRDs now that their conversion webhooks are disabled
   kubectl get crds -o name 2>/dev/null | xargs -I {} kubectl delete {} --timeout=10s 2>/dev/null || true
 
+  local namespaces="kyverno tekton-pipelines tekton-dashboard tekton-pipelines-resolvers infra flux-system"
+
   # Trigger namespace deletion
-  kubectl delete ns kyverno tekton-pipelines tekton-dashboard tekton-pipelines-resolvers infra --ignore-not-found --wait=false || true
+  kubectl delete ns ${namespaces} --ignore-not-found --wait=false || true
 
   log_info "--- 6. FINALIZER CLEANUP (The Final Kill) ---"
-  for ns in kyverno tekton-pipelines tekton-dashboard tekton-pipelines-resolvers infra flux-system; do
+  for ns in ${namespaces}; do
     kubectl patch ns "$ns" -p '{"spec":{"finalizers":[]}}' --type=merge 2>/dev/null || true
   done
 
