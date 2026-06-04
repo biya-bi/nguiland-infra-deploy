@@ -75,8 +75,8 @@ suspend_helmreleases() {
     # Guard against empty strings/whitespace passed as arguments
     [[ -z "${release_name// /}" ]] && continue
 
-    log_info "Suspending HelmRelease ${release_name} in namespace ${namespace}"
     wait_for_helmrelease_exists "${namespace}" "${release_name}" "10m"
+    log_info "Suspending HelmRelease ${release_name} in namespace ${namespace}"
     flux suspend hr "${release_name}" -n "${namespace}"
   done
 }
