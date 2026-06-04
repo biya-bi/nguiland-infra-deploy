@@ -35,6 +35,15 @@ reconcile_flux_resource() {
   kubectl patch "${resource_type}" "${resource_name}" -n "${namespace}" --type merge -p "{\"metadata\":{\"annotations\":{\"reconcile.toolkit.fluxcd.io/requestedAt\":\"$(date +%s)\"}}}" >/dev/null
 }
 
+toggle_resource_suspension() {
+  local namespace="${1}"
+  local resource_type="${2}"
+  local resource_name="${3}"
+  local suspend="${4}"
+
+  kubectl patch "${resource_type}" "${resource_name}" -n "${namespace}" --type merge -p "{\"spec\":{\"suspend\":${suspend}}}" >/dev/null
+}
+
 reconcile_helm_release() {
   reconcile_flux_resource "${1}" "helmrelease" "${2}"
 }
@@ -77,7 +86,7 @@ suspend_helmreleases() {
 
     wait_for_helmrelease_exists "${namespace}" "${release_name}" "10m"
     log_info "Suspending HelmRelease ${release_name} in namespace ${namespace}"
-    flux suspend hr "${release_name}" -n "${namespace}"
+    toggle_resource_suspension "${namespace}" "helmrelease" "${release_name}" "true"
   done
 }
 
@@ -94,7 +103,8 @@ resume_helmreleases() {
     [[ -z "${release_name// /}" ]] && continue
 
     log_info "Resuming HelmRelease ${release_name} in namespace ${namespace}"
-    flux resume hr "${release_name}" -n "${namespace}"
+    toggle_resource_suspension "${namespace}" "helmrelease" "${release_name}" "false"
+    reconcile_helm_release "${namespace}" "${release_name}"
   done
 }
 
