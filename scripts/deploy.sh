@@ -66,10 +66,10 @@ deploy() {
 
   # Ensure the internal chart repository is ready before the JCR registry (artifactory-jcr).
   # This is the primary source for the postgres and artifactory-jcr charts.
-  ensure_helm_release_ready "${namespace}" "${chart_repo_release_name}" "10m" "true"
+  ensure_helm_release_ready "${namespace}" "${chart_repo_release_name}" "10m"
 
   # Ensure the registry is functionally ready to receive image and OCI pushes.
-  ensure_helm_release_ready "${namespace}" "${jcr_release_name}" "15m" "true"
+  ensure_helm_release_ready "${namespace}" "${jcr_release_name}" "15m"
 
   local docker_build_manifest_path="infra/docker/build.yaml"
   local oci_publish_manifest_path="infra/oci/publish.yaml"

@@ -26,28 +26,21 @@ wait_for_helmrelease() {
   wait_for_resource "${1}" "helmrelease" "${2}" "condition=Ready" "${3:-5m}"
 }
 
-reconcile_helm_release() {
+reconcile_flux_resource() {
   local namespace="${1}"
-  local release_name="${2}"
-  local with_source="${3:-false}"
+  local resource_type="${2}"
+  local resource_name="${3}"
 
-  local args=()
-  local info_suffix=""
-  if [[ "${with_source}" == "true" ]]; then
-    args+=("--with-source")
-    info_suffix=" (with source)"
-  fi
+  log_info "Triggering reconciliation signal for ${resource_type}/${resource_name} in namespace ${namespace}"
+  kubectl patch "${resource_type}" "${resource_name}" -n "${namespace}" --type merge -p "{\"metadata\":{\"annotations\":{\"reconcile.toolkit.fluxcd.io/requestedAt\":\"$(date +%s)\"}}}" >/dev/null
+}
 
-  log_info "Triggering reconciliation of HelmRelease ${release_name}${info_suffix} in namespace ${namespace}"
-  flux reconcile hr "${release_name}" "${args[@]}" -n "${namespace}"
+reconcile_helm_release() {
+  reconcile_flux_resource "${1}" "helmrelease" "${2}"
 }
 
 reconcile_git_repository() {
-  local namespace="${1}"
-  local repo_name="${2}"
-
-  log_info "Triggering reconciliation of GitRepository ${repo_name} in namespace ${namespace}"
-  flux reconcile source git "${repo_name}" -n "${namespace}"
+  reconcile_flux_resource "${1}" "gitrepository" "${2}"
 }
 
 ensure_git_repository_ready() {
@@ -64,10 +57,9 @@ ensure_helm_release_ready() {
   local namespace="${1}"
   local release_name="${2}"
   local timeout="${3:-10m}"
-  local with_source="${4:-false}"
 
   wait_for_helmrelease_exists "${namespace}" "${release_name}" "${timeout}"
-  reconcile_helm_release "${namespace}" "${release_name}" "${with_source}"
+  reconcile_helm_release "${namespace}" "${release_name}"
   wait_for_helmrelease "${namespace}" "${release_name}" "${timeout}"
 }
 
