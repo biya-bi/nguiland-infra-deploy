@@ -26,7 +26,7 @@ wait_for_helmrelease() {
   wait_for_resource "${1}" "helmrelease" "${2}" "condition=Ready" "${3:-5m}"
 }
 
-reconcile_flux_resource() {
+reconcile_resource() {
   local namespace="${1}"
   local resource_type="${2}"
   local resource_name="${3}"
@@ -45,11 +45,11 @@ toggle_resource_suspension() {
 }
 
 reconcile_helm_release() {
-  reconcile_flux_resource "${1}" "helmrelease" "${2}"
+  reconcile_resource "${1}" "helmrelease" "${2}"
 }
 
 reconcile_git_repository() {
-  reconcile_flux_resource "${1}" "gitrepository" "${2}"
+  reconcile_resource "${1}" "gitrepository" "${2}"
 }
 
 ensure_git_repository_ready() {
