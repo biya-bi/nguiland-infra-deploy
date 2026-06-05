@@ -66,6 +66,13 @@ ensure_helm_release_ready() {
   local namespace="${1}"
   local release_name="${2}"
   local timeout="${3:-10m}"
+  local optional="${4:-false}"
+
+  if [[ "${optional}" == "true" ]]; then
+    if ! kubectl get helmrelease "${release_name}" -n "${namespace}" >/dev/null 2>&1; then
+      return 0
+    fi
+  fi
 
   wait_for_helmrelease_exists "${namespace}" "${release_name}" "${timeout}"
   reconcile_helm_release "${namespace}" "${release_name}"

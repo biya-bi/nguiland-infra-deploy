@@ -43,6 +43,7 @@ deploy() {
 
   local jcr_release_name="artifactory-jcr"
   local oss_release_name="artifactory-oss"
+  local postgres_release_name="postgres"
   local chart_git_repo_name="helm"
   local chart_repo_release_name="chart-repository"
 
@@ -68,8 +69,16 @@ deploy() {
   # This is the primary source for the postgres and artifactory-jcr charts.
   ensure_helm_release_ready "${namespace}" "${chart_repo_release_name}" "10m"
 
+  # Ensure the PostgreSQL database is functionally ready if it is
+  # deployed in this environment (local/int).
+  ensure_helm_release_ready "${namespace}" "${postgres_release_name}" "10m" "true"
+
   # Ensure the registry is functionally ready to receive image and OCI pushes.
   ensure_helm_release_ready "${namespace}" "${jcr_release_name}" "15m"
+
+  # Ensure the OSS binary repository is functionally ready if it is
+  # deployed in this environment (local/int).
+  ensure_helm_release_ready "${namespace}" "${oss_release_name}" "15m" "true"
 
   local docker_build_manifest_path="infra/docker/build.yaml"
   local oci_publish_manifest_path="infra/oci/publish.yaml"
