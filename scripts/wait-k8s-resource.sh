@@ -88,6 +88,18 @@ wait_for_resource() {
       fi
     fi
 
+    # Fail-fast: Check for terminal Flux errors
+    if [[ "${resource_type}" == "helmrelease" ]]; then
+      local hr_status
+      hr_status=$(kubectl get helmrelease "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
+      local hr_reason=$(echo "${hr_status}" | jq -r '.status.conditions[]? | select(.type=="Ready") | .reason' 2>/dev/null)
+      if [[ "${hr_reason}" == "ArtifactFailed" || "${hr_reason}" == "ChartPullFailed" ]]; then
+        printf "\n"
+        log_error "helmrelease/${resource_name} failed terminal check: ${hr_reason}. Check 'kubectl describe helmrelease ${resource_name} -n ${namespace}'"
+        return 1
+      fi
+    fi
+
     # Fail-fast: Check if the pod is in a bad state
     if [[ "${resource_type}" == "deployment" || "${resource_type}" == "pod" ]]; then
       local status_json
