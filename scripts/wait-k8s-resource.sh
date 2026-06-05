@@ -46,6 +46,40 @@ get_wait_message() {
   fi
 }
 
+check_helmrelease_terminal_failure() {
+  local namespace="$1"
+  local resource_name="$2"
+
+  local hr_status
+  hr_status=$(kubectl get helmrelease "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
+  local hr_reason
+  hr_reason=$(echo "${hr_status}" | jq -r '.status.conditions[]? | select(.type=="Ready") | .reason' 2>/dev/null)
+
+  if [[ "${hr_reason}" == "ArtifactFailed" || "${hr_reason}" == "ChartPullFailed" ]]; then
+    printf "\n"
+    log_error "helmrelease/${resource_name} failed terminal check: ${hr_reason}. Check 'kubectl describe helmrelease ${resource_name} -n ${namespace}'"
+    return 1
+  fi
+  return 0
+}
+
+check_workload_terminal_failure() {
+  local namespace="$1"
+  local resource_type="$2"
+  local resource_name="$3"
+
+  local status_json
+  status_json=$(kubectl get "${resource_type}" "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
+
+  if echo "${status_json}" | jq -e '.status.containerStatuses[]? | select(.state.waiting.reason == "CrashLoopBackOff" or .state.waiting.reason == "Error")' >/dev/null 2>&1; then
+    printf "\n"
+    log_error "${resource_type}/${resource_name} entered a terminal failure state (CrashLoopBackOff/Error)."
+    kubectl logs -n "${namespace}" "${resource_type}/${resource_name}" --all-containers --tail=20 || true
+    return 1
+  fi
+  return 0
+}
+
 wait_for_resource() {
   local namespace="$1"
   local resource_type="$2"
@@ -90,24 +124,14 @@ wait_for_resource() {
 
     # Fail-fast: Check for terminal Flux errors
     if [[ "${resource_type}" == "helmrelease" ]]; then
-      local hr_status
-      hr_status=$(kubectl get helmrelease "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
-      local hr_reason=$(echo "${hr_status}" | jq -r '.status.conditions[]? | select(.type=="Ready") | .reason' 2>/dev/null)
-      if [[ "${hr_reason}" == "ArtifactFailed" || "${hr_reason}" == "ChartPullFailed" ]]; then
-        printf "\n"
-        log_error "helmrelease/${resource_name} failed terminal check: ${hr_reason}. Check 'kubectl describe helmrelease ${resource_name} -n ${namespace}'"
+      if ! check_helmrelease_terminal_failure "${namespace}" "${resource_name}"; then
         return 1
       fi
     fi
 
     # Fail-fast: Check if the pod is in a bad state
     if [[ "${resource_type}" == "deployment" || "${resource_type}" == "pod" ]]; then
-      local status_json
-      status_json=$(kubectl get "${resource_type}" "${resource_name}" -n "${namespace}" -o json 2>/dev/null || echo "{}")
-      if echo "${status_json}" | jq -e '.status.containerStatuses[]? | select(.state.waiting.reason == "CrashLoopBackOff" or .state.waiting.reason == "Error")' >/dev/null 2>&1; then
-        printf "\n"
-        log_error "${resource_type}/${resource_name} entered a terminal failure state (CrashLoopBackOff/Error)."
-        kubectl logs -n "${namespace}" "${resource_type}/${resource_name}" --all-containers --tail=20 || true
+      if ! check_workload_terminal_failure "${namespace}" "${resource_type}" "${resource_name}"; then
         return 1
       fi
     fi
