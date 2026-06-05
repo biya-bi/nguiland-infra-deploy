@@ -11,15 +11,15 @@ spec:
     - name: repository
       value: helm
     - name: charts-dir
-      value: .
+      value: addons
+    - name: excluded-charts
+      value: cronjob-common
     - name: registry
       value: oci://artifactory-jcr.infra/docker-local
     - name: artifactory-readiness-timeout
       value: 15m
     - name: skip-tls
       value: "false"
-    - name: excluded-charts
-      value: "artifactory-jcr artifactory-common chart-repository cronjob-common postgres"
   pipelineRef:
     name: helm-chart-oci-publish
   taskRunTemplate:
