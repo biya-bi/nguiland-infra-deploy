@@ -74,11 +74,17 @@ ensure_helm_release_ready() {
 
   if [[ "${optional}" == "true" ]]; then
     if ! kubectl get helmrelease "${release_name}" -n "${namespace}" >/dev/null 2>&1; then
-      return 0
+      # If the release is optional and not found immediately, give Flux a short 
+      # window to materialize the resource before assuming it is excluded.
+      if ! wait_for_helmrelease_exists "${namespace}" "${release_name}" "1m"; then
+        log_info "Optional HelmRelease ${release_name} was not discovered. Skipping..."
+        return 0
+      fi
     fi
+  else
+    wait_for_helmrelease_exists "${namespace}" "${release_name}" "${timeout}"
   fi
 
-  wait_for_helmrelease_exists "${namespace}" "${release_name}" "${timeout}"
   reconcile_helm_release "${namespace}" "${release_name}"
   wait_for_helmrelease "${namespace}" "${release_name}" "${timeout}"
 }
