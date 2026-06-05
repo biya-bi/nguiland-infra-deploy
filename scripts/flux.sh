@@ -48,6 +48,10 @@ reconcile_helm_release() {
   reconcile_resource "${1}" "helmrelease" "${2}"
 }
 
+reconcile_helm_repository() {
+  reconcile_resource "${1}" "helmrepository" "${2}"
+}
+
 reconcile_git_repository() {
   reconcile_resource "${1}" "gitrepository" "${2}"
 }

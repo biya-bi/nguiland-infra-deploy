@@ -46,6 +46,7 @@ deploy() {
   local postgres_release_name="postgres"
   local chart_git_repo_name="helm"
   local chart_repo_release_name="chart-repository"
+  local chart_repo_source_name="chart-repository"
 
   # Wait for the primary chart Git repository to be ready. This prevents 
   # race conditions where HelmReleases are reconciled before Flux has 
@@ -68,6 +69,10 @@ deploy() {
   # Ensure the internal chart repository is ready before the JCR registry (artifactory-jcr).
   # This is the primary source for the postgres and artifactory-jcr charts.
   ensure_helm_release_ready "${namespace}" "${chart_repo_release_name}" "10m"
+
+  # Force Flux to re-index the internal repository immediately so that
+  # the postgres and JCR charts are discovered without waiting for the 5m poll interval.
+  reconcile_helm_repository "${namespace}" "${chart_repo_source_name}"
 
   # Ensure the PostgreSQL database is functionally ready if it is
   # deployed in this environment (local/int).
