@@ -115,7 +115,7 @@ start_port_forward_by_name() {
 
   local mapping
   mapping=$(get_port_forward_mapping "${service_name}" "${namespace}") || {
-    log_warn "No port forward mapping found for service '${service_name}' in namespace '${namespace}'. Skipping..." >&2
+    log_warn "No port forward mapping found for service '${service_name}' in namespace '${namespace}'. Skipping..."
     return 1
   }
 
