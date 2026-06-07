@@ -53,11 +53,11 @@ get_image_push_endpoint() {
   local image_push_endpoint
   local image_push_port
 
-  image_push_endpoint=$(kubectl get configmap cluster-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_HOST}' 2>/dev/null || echo "")
-  image_push_port=$(kubectl get configmap cluster-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_PORT}' 2>/dev/null || echo "")
+  image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_HOST}' 2>/dev/null || echo "")
+  image_push_port=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_PORT}' 2>/dev/null || echo "")
 
   if [[ -z "${image_push_endpoint}" ]]; then
-    log_error "Failed to retrieve ACTIFACTORY_JCR_HOST from cluster-settings ConfigMap in namespace ${namespace}"
+    log_error "Failed to retrieve ACTIFACTORY_JCR_HOST from env-settings ConfigMap in namespace ${namespace}"
     return 1
   fi
 
