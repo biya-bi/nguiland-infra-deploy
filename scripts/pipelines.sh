@@ -35,6 +35,35 @@ copy_pipelinerun_manifest() {
   echo "${tmp_file}"
 }
 
+get_artifactory_oci_skip_tls() {
+  local namespace="${1}"
+  local helm_repo_json
+  helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
+
+  local insecure_status
+  insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
+
+  local registry_url
+  registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
+
+  local lower_insecure_status
+  lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
+
+  local result="false"
+  [[ "${lower_insecure_status}" == "true" ]] && result="true"
+
+  echo "${registry_url}" > /tmp/registry_url_cache # Temporary cache for the calling function if needed
+  echo "${result}"
+}
+
+set_skip_tls_param() {
+  local skip_tls="${1}"
+  local manifest_path="${2}"
+
+  log_info "Setting skip-tls to ${skip_tls} in manifest ${manifest_path}"
+  yq_i ".spec.params |= (map(select(.name != \"skip-tls\")) + [{\"name\": \"skip-tls\", \"value\": \"${skip_tls}\"}])" "${manifest_path}"
+}
+
 set_docker_build_pipeline_params() {
   local namespace="${1}"
   local manifest_path="${2}"
@@ -56,6 +85,11 @@ set_docker_build_pipeline_params() {
   yq_i "(.spec.params[] | select(.name == \"image-push-endpoint\")).value = \"${image_push_endpoint}\"" "${manifest_path}"
   log_info "Setting always-build to true in manifest ${manifest_path}"
   yq_i "(.spec.params[] | select(.name == \"always-build\")).value = \"true\"" "${manifest_path}"
+
+  local skip_tls
+  skip_tls=$(get_artifactory_oci_skip_tls "${namespace}")
+
+  set_skip_tls_param "${skip_tls}" "${manifest_path}"
 }
 
 set_oci_publish_pipeline_params() {
@@ -67,24 +101,13 @@ set_oci_publish_pipeline_params() {
     return 1
   fi
 
-  local helm_repo_json
-  helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
-  local insecure_status
-  insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
+  local skip_tls
+  skip_tls=$(get_artifactory_oci_skip_tls "${namespace}")
+
   local registry_url
-  registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
-  local skip_tls="false"
-  local lower_insecure_status
-  lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
+  registry_url=$(cat /tmp/registry_url_cache 2>/dev/null || echo "")
 
-  log_info "Retrieved URL from HelmRepository artifactory-oci: ${registry_url:-<missing>}"
-
-  if [[ "${lower_insecure_status}" == "true" ]]; then
-    skip_tls="true"
-  fi
-
-  log_info "Setting skip-tls to ${skip_tls} based on artifactory-oci HelmRepository insecure status: ${insecure_status:-<missing>} in manifest ${manifest_path}"
-  yq_i "(.spec.params[] | select(.name == \"skip-tls\")).value = \"${skip_tls}\"" "${manifest_path}"
+  set_skip_tls_param "${skip_tls}" "${manifest_path}"
 
   if [[ -n "${registry_url}" ]]; then
     local registry_suffix="org.nguiland.infra"
