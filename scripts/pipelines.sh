@@ -35,33 +35,49 @@ copy_pipelinerun_manifest() {
   echo "${tmp_file}"
 }
 
-get_artifactory_oci_skip_tls() {
-  local namespace="${1}"
-  local helm_repo_json
-  helm_repo_json=$(kubectl get helmrepository artifactory-oci -n "${namespace}" -o json 2>/dev/null || echo "{}")
-
-  local insecure_status
-  insecure_status=$(echo "${helm_repo_json}" | jq -r '.spec.insecure // "false"')
-
-  local registry_url
-  registry_url=$(echo "${helm_repo_json}" | jq -r '.spec.url // ""')
-
-  local lower_insecure_status
-  lower_insecure_status=$(echo "${insecure_status}" | tr '[:upper:]' '[:lower:]')
-
-  local result="false"
-  [[ "${lower_insecure_status}" == "true" ]] && result="true"
-
-  echo "${registry_url}" > /tmp/registry_url_cache # Temporary cache for the calling function if needed
-  echo "${result}"
+get_artifactory_oci_resource() {
+  kubectl get helmrepository artifactory-oci -n "${1}" -o json 2>/dev/null || echo "{}"
 }
 
-set_skip_tls_param() {
-  local skip_tls="${1}"
-  local manifest_path="${2}"
+set_pipeline_param() {
+  local name="${1}"
+  local value="${2}"
+  local manifest_path="${3}"
 
-  log_info "Setting skip-tls to ${skip_tls} in manifest ${manifest_path}"
-  yq_i ".spec.params |= (map(select(.name != \"skip-tls\")) + [{\"name\": \"skip-tls\", \"value\": \"${skip_tls}\"}])" "${manifest_path}"
+  log_info "Setting ${name} to ${value} in manifest ${manifest_path}"
+  yq_i ".spec.params |= (map(select(.name != \"${name}\")) + [{\"name\": \"${name}\", \"value\": \"${value}\"}])" "${manifest_path}"
+}
+
+get_image_push_endpoint() {
+  local namespace="${1}"
+  local image_push_endpoint
+  local image_push_port
+
+  image_push_endpoint=$(kubectl get configmap cluster-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_HOST}' 2>/dev/null || echo "")
+  image_push_port=$(kubectl get configmap cluster-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_PORT}' 2>/dev/null || echo "")
+
+  if [[ -z "${image_push_endpoint}" ]]; then
+    log_error "Failed to retrieve ACTIFACTORY_JCR_HOST from cluster-settings ConfigMap in namespace ${namespace}"
+    return 1
+  fi
+
+  if [[ -n "${image_push_port}" ]]; then
+    image_push_endpoint="${image_push_endpoint}:${image_push_port}"
+  fi
+
+  echo "${image_push_endpoint}"
+}
+
+get_normalized_registry_url() {
+  local registry_url="${1}"
+  local registry_suffix="org.nguiland.infra"
+  local normalized_url="${registry_url%/}"
+
+  if [[ "${normalized_url}" != "${registry_suffix}" && "${normalized_url}" != */${registry_suffix} ]]; then
+    normalized_url="${normalized_url}/${registry_suffix}"
+  fi
+
+  echo "${normalized_url}"
 }
 
 set_docker_build_pipeline_params() {
@@ -74,22 +90,21 @@ set_docker_build_pipeline_params() {
   fi
 
   local image_push_endpoint
-  image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.image-push-endpoint}' 2>/dev/null || true)
+  image_push_endpoint=$(get_image_push_endpoint "${namespace}")
 
   if [[ -z "${image_push_endpoint}" ]]; then
-    log_error "Failed to retrieve image-push-endpoint from env-settings ConfigMap in namespace ${namespace}"
     return 1
   fi
 
-  log_info "Setting image-push-endpoint to ${image_push_endpoint} in manifest ${manifest_path}"
-  yq_i "(.spec.params[] | select(.name == \"image-push-endpoint\")).value = \"${image_push_endpoint}\"" "${manifest_path}"
-  log_info "Setting always-build to true in manifest ${manifest_path}"
-  yq_i "(.spec.params[] | select(.name == \"always-build\")).value = \"true\"" "${manifest_path}"
+  set_pipeline_param "image-push-endpoint" "${image_push_endpoint}" "${manifest_path}"
+  set_pipeline_param "always-build" "true" "${manifest_path}"
 
+  local oci_res
+  oci_res=$(get_artifactory_oci_resource "${namespace}")
   local skip_tls
-  skip_tls=$(get_artifactory_oci_skip_tls "${namespace}")
+  skip_tls=$(echo "${oci_res}" | jq -r 'if .spec.insecure == true then "true" else "false" end')
 
-  set_skip_tls_param "${skip_tls}" "${manifest_path}"
+  set_pipeline_param "skip-tls" "${skip_tls}" "${manifest_path}"
 }
 
 set_oci_publish_pipeline_params() {
@@ -101,25 +116,19 @@ set_oci_publish_pipeline_params() {
     return 1
   fi
 
+  local oci_res
+  oci_res=$(get_artifactory_oci_resource "${namespace}")
   local skip_tls
-  skip_tls=$(get_artifactory_oci_skip_tls "${namespace}")
-
+  skip_tls=$(echo "${oci_res}" | jq -r 'if .spec.insecure == true then "true" else "false" end')
   local registry_url
-  registry_url=$(cat /tmp/registry_url_cache 2>/dev/null || echo "")
+  registry_url=$(echo "${oci_res}" | jq -r '.spec.url // ""')
 
-  set_skip_tls_param "${skip_tls}" "${manifest_path}"
+  set_pipeline_param "skip-tls" "${skip_tls}" "${manifest_path}"
 
   if [[ -n "${registry_url}" ]]; then
-    local registry_suffix="org.nguiland.infra"
-    local normalized_registry_url="${registry_url%/}"
-
-    if [[ "${normalized_registry_url}" != "${registry_suffix}" && "${normalized_registry_url}" != */${registry_suffix} ]]; then
-      normalized_registry_url="${normalized_registry_url}/${registry_suffix}"
-    fi
-
-    registry_url="${normalized_registry_url}"
-    log_info "Setting registry to ${registry_url} based on artifactory-oci HelmRepository URL in manifest ${manifest_path}"
-    yq_i "(.spec.params[] | select(.name == \"registry\")).value = \"${registry_url}\"" "${manifest_path}"
+    local normalized_url
+    normalized_url=$(get_normalized_registry_url "${registry_url}")
+    set_pipeline_param "registry" "${normalized_url}" "${manifest_path}"
   fi
 }
 
