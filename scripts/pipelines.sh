@@ -53,11 +53,11 @@ get_image_push_endpoint() {
   local image_push_endpoint
   local image_push_port
 
-  image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_HOST}' 2>/dev/null || echo "")
-  image_push_port=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.ACTIFACTORY_JCR_PORT}' 2>/dev/null || echo "")
+  image_push_endpoint=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.ARTIFACTORY_JCR_HOST}' 2>/dev/null || echo "")
+  image_push_port=$(kubectl get configmap env-settings -n "${namespace}" -o jsonpath='{.data.ARTIFACTORY_JCR_PORT}' 2>/dev/null || echo "")
 
   if [[ -z "${image_push_endpoint}" ]]; then
-    log_error "Failed to retrieve ACTIFACTORY_JCR_HOST from env-settings ConfigMap in namespace ${namespace}"
+    log_error "Failed to retrieve ARTIFACTORY_JCR_HOST from env-settings ConfigMap in namespace ${namespace}"
     return 1
   fi
 
@@ -147,6 +147,13 @@ wait_for_pipelinerun_completion() {
   return 1
 }
 
+replace_environment_placeholder() {
+  local environment="${1}"
+  local manifest_path="${2}"
+
+  ENVIRONMENT="${environment}" yq -i '(.. | select(tag == "!!str")) |= sub("\${ENVIRONMENT}", strenv(ENVIRONMENT))' "${manifest_path}"
+}
+
 run_pipeline() {
   local namespace="${1}"
   local relative_path="${2}"
@@ -162,6 +169,8 @@ run_pipeline() {
   fi
 
   log_info "Applying PipelineRun manifest: ${manifest_path}"
+
+  replace_environment_placeholder "${namespace}" "${manifest_path}"
 
   local pipelinerun_name
   pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')

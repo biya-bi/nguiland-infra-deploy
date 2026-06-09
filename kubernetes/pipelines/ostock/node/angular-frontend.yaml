@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   generateName: node-helm-run-
-  namespace: infra
+  namespace: ${ENVIRONMENT}
 spec:
   pipelineRef:
     name: node-helm

@@ -21,11 +21,17 @@ set -euo pipefail
 scripts_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "${scripts_dir}/logger.sh"
 
-port_forward_mappings=(
-  "9001:keycloak:infra"
-  "9002:artifactory-jcr:infra"
-  "9003:artifactory-oss:infra"
-)
+port_forward_mappings=()
+
+set_port_forward_mappings() {
+    local namespace="$1"
+
+    port_forward_mappings=(
+      "9001:keycloak:${namespace}"
+      "9002:artifactory-jcr:${namespace}"
+      "9003:artifactory-oss:${namespace}"
+    )
+}
 
 enable_port_forward() {
   local environment="$1"
@@ -68,6 +74,10 @@ enable_port_forward() {
 get_port_forward_mapping() {
   local target_service_name="$1"
   local target_namespace="$2"
+
+  if [[ ${#port_forward_mappings[@]} -eq 0 ]]; then
+    set_port_forward_mappings "${target_namespace}"
+  fi
 
   local mapping
   local _
@@ -224,6 +234,14 @@ watch_port_forwards() {
 # Direct-execution guard: only invoke start_port_forwards when this script is executed directly,
 # not when it is sourced into another shell.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [[ "${1:-}" == "--no-detach" ]]; then
+    detach_mode="false"
+    namespace="${2:-default}"
+  else
+    detach_mode="true"
+    namespace="${1:-default}"
+  fi
+
   # 1. Kill previous background processes
   previous_pids=$(pgrep -f "$(basename "$0")" | grep -v "^$$" || echo "")
 
@@ -242,11 +260,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   fi
 
   # 3. Check if a 'nohup' flag was passed
-  if [[ "${1:-}" != "--no-detach" ]]; then
+  if [[ "${detach_mode}" == "true" ]]; then
     log_info "Detaching and running in background..."
-    nohup "$0" --no-detach >> "$log_file" 2>&1 &
+    nohup "$0" --no-detach "${namespace}" >> "$log_file" 2>&1 &
     exit 0
   fi
+
+  set_port_forward_mappings "${namespace}"
 
   host_address="${NGUILAND_PORT_FORWARD_ADDRESS:-localhost}"
 

@@ -3,7 +3,7 @@ kind: PipelineRun
 metadata:
   annotations: {}
   generateName: maven-lib-run-
-  namespace: infra
+  namespace: ${ENVIRONMENT}
 spec:
   params:
     - name: flux-gitrepo-namespace

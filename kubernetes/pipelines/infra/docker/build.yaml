@@ -3,11 +3,11 @@ kind: PipelineRun
 metadata:
   annotations: {}
   generateName: docker-build-run-
-  namespace: infra
+  namespace: ${ENVIRONMENT}
 spec:
   params:
     - name: flux-gitrepo-namespace
-      value: infra
+      value: ${ENVIRONMENT}
     - name: flux-gitrepo-name
       value: docker
     - name: context-dir
@@ -15,7 +15,7 @@ spec:
     - name: always-build
       value: "false"
     - name: image-push-endpoint
-      value: artifactory-jcr.infra
+      value: artifactory-jcr.${ENVIRONMENT}
   pipelineRef:
     name: docker-build
   taskRunTemplate:

@@ -44,9 +44,9 @@ Install nginx on the cloud virtual machine. An example configuration file is giv
 ### On-premises host entries
 On the on-premises machine, the below entries should be added to the /etc/hosts file:
 ```
-127.0.0.1 artifactory-jcr.infra
-127.0.0.1 keycloak.infra
-127.0.0.1 artifactory-oss.infra
+127.0.0.1 artifactory-jcr.${ENVIRONMENT}
+127.0.0.1 keycloak.${ENVIRONMENT}
+127.0.0.1 artifactory-oss.${ENVIRONMENT}
 127.0.0.1 angular-frontend.ostock
 127.0.0.1 gateway-service.ostock
 ```

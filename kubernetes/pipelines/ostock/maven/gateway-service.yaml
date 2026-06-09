@@ -2,7 +2,7 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   generateName: maven-helm-run-
-  namespace: infra
+  namespace: ${ENVIRONMENT}
 spec:
   pipelineRef:
     name: maven-helm

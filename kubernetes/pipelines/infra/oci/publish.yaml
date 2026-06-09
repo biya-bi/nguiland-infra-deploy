@@ -3,11 +3,11 @@ kind: PipelineRun
 metadata:
   annotations: {}
   generateName: helm-chart-oci-publish-run-
-  namespace: infra
+  namespace: ${ENVIRONMENT}
 spec:
   params:
     - name: namespace
-      value: infra
+      value: ${ENVIRONMENT}
     - name: repository
       value: helm
     - name: charts-dir
@@ -15,7 +15,7 @@ spec:
     - name: excluded-charts
       value: cronjob-common
     - name: registry
-      value: oci://artifactory-jcr.infra/docker-local
+      value: oci://artifactory-jcr.${ENVIRONMENT}/docker-local
     - name: artifactory-readiness-timeout
       value: 15m
     - name: skip-tls
