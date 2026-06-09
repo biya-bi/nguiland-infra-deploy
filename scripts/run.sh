@@ -81,7 +81,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   branch="${2}"
 
   flux_namespace="flux-system"
-  target_namespace="infra"
+  target_namespace="${cluster}"
   sops_age_namespace="${target_namespace}"
   owner="biya-bi"
   repository="nguiland-ops-flux"
