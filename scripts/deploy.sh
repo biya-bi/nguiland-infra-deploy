@@ -112,7 +112,7 @@ deploy() {
   wait_for_helmrepository_exists "${namespace}" "artifactory-oci" "10m"
 
   if [[ "$port_forward_enabled" == "true" ]]; then
-    "${scripts_dir}/port-forward.sh"
+    "${scripts_dir}/port-forward.sh" "${namespace}"
   fi
 }
 
