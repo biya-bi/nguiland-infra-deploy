@@ -8,6 +8,7 @@ pipelines_manifest_dir="${scripts_dir}/../kubernetes/pipelines"
 . "${scripts_dir}/logger.sh"
 . "${scripts_dir}/yq.sh"
 . "${scripts_dir}/wait-k8s-resource.sh"
+. "${scripts_dir}/text.sh"
 
 wait_for_pipeline_exists() {
   wait_for_resource "${1}" "pipeline" "${2}" "exists" "${3:-10m}"
@@ -147,13 +148,6 @@ wait_for_pipelinerun_completion() {
   return 1
 }
 
-replace_environment_placeholder() {
-  local environment="${1}"
-  local manifest_path="${2}"
-
-  ENVIRONMENT="${environment}" yq -i '(.. | select(tag == "!!str")) |= sub("\${ENVIRONMENT}", strenv(ENVIRONMENT))' "${manifest_path}"
-}
-
 run_pipeline() {
   local namespace="${1}"
   local relative_path="${2}"
@@ -170,7 +164,7 @@ run_pipeline() {
 
   log_info "Applying PipelineRun manifest: ${manifest_path}"
 
-  replace_environment_placeholder "${namespace}" "${manifest_path}"
+  replace_placeholder -n "ENVIRONMENT" -v "${namespace}" -p "${manifest_path}" -i
 
   local pipelinerun_name
   pipelinerun_name=$(kubectl create -f "${manifest_path}" -o jsonpath='{.metadata.name}')
